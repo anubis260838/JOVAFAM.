@@ -154,6 +154,7 @@
         /* Glow */
         .glow-gold { box-shadow: 0 0 30px rgba(201, 169, 110, 0.25); }
     </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-luxury-900 text-luxury-cream">
 
@@ -671,11 +672,24 @@
             ]
         };
 
-        function loadHomeData() {
-            const saved = localStorage.getItem('jovafam_home');
+        async function loadHomeData() {
             let home = DEFAULT_HOME;
-            if (saved) {
-                try { home = JSON.parse(saved); } catch(e) {}
+            const HARDCODED_URL = '';
+            const HARDCODED_KEY = '';
+            try {
+                const saved = localStorage.getItem('jovafam_supabase');
+                const cfg = saved ? JSON.parse(saved) : {};
+                const url = HARDCODED_URL || cfg.url;
+                const key = HARDCODED_KEY || cfg.key;
+                if (url && key && window.supabase) {
+                    const client = window.supabase.createClient(url, key);
+                    const { data, error } = await client.from('site_data').select('value').eq('key','home').maybeSingle();
+                    if (!error && data?.value) home = data.value;
+                }
+            } catch(e) { console.warn('No se pudo cargar el inicio remoto:', e); }
+            if (home === DEFAULT_HOME) {
+                const saved = localStorage.getItem('jovafam_home');
+                if (saved) { try { home = JSON.parse(saved); } catch(e) {} }
             }
 
             // Render products
