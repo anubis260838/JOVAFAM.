@@ -573,6 +573,63 @@ Chile"
             if (urlEl) urlEl.value = cfg.url || '';
             if (keyEl) keyEl.value = cfg.key || '';
         }
+        // ===== REMOTE SITE DATA (SUPABASE) =====
+        let siteClient = null;
+        function initSiteClient() {
+            const cfg = getSupabaseConfig();
+            if (cfg.url && cfg.key && window.supabase) {
+                siteClient = window.supabase.createClient(cfg.url, cfg.key);
+            } else {
+                siteClient = null;
+            }
+            return siteClient;
+        }
+        async function getSiteData(key) {
+            if (!siteClient) return null;
+            const { data, error } = await siteClient.from('site_data').select('value').eq('key', key).maybeSingle();
+            if (error) throw error;
+            return data ? data.value : null;
+        }
+        async function setSiteData(key, value) {
+            if (!siteClient) throw new Error('Supabase no esta configurado');
+            const { error } = await siteClient.from('site_data').upsert({ key: key, value: value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+            if (error) throw error;
+        }
+        async function uploadSiteFile(file, folder) {
+            if (!siteClient) throw new Error('Supabase no esta configurado');
+            if (!file || !file.type.startsWith('image/')) throw new Error('Archivo de imagen no valido');
+            if (file.size > 5 * 1024 * 1024) throw new Error('La imagen debe pesar menos de 5MB');
+            const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g,'') || 'jpg';
+            const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2,10)}.${ext}`;
+            const { error } = await siteClient.storage.from('site-assets').upload(path, file, { contentType: file.type, upsert: false });
+            if (error) throw error;
+            return siteClient.storage.from('site-assets').getPublicUrl(path).data.publicUrl;
+        }
+        async function uploadDataUrl(dataUrl, folder, nameHint='image') {
+            const res = await fetch(dataUrl);
+            const blob = await res.blob();
+            const ext = (blob.type.split('/')[1] || 'png').replace('jpeg','jpg');
+            const file = new File([blob], `${nameHint}.${ext}`, { type: blob.type || 'image/png' });
+            return uploadSiteFile(file, folder);
+        }
+        async function normalizeRemoteImages(value) {
+            if (!value) return value;
+            const cloned = JSON.parse(JSON.stringify(value));
+            for (const product of (cloned.products || [])) {
+                if (product.thumbnail && product.thumbnail.startsWith('data:')) product.thumbnail = await uploadDataUrl(product.thumbnail, 'catalog', product.id+'-thumb');
+                for (const image of (product.images || [])) {
+                    if (image.src && image.src.startsWith('data:')) image.src = await uploadDataUrl(image.src, 'catalog', product.id+'-image');
+                }
+            }
+            for (const product of (cloned.products || [])) {
+                if (product.image && product.image.startsWith('data:')) product.image = await uploadDataUrl(product.image, 'home', product.id+'-home');
+            }
+            for (const item of (cloned.gallery || [])) {
+                if (item.src && item.src.startsWith('data:')) item.src = await uploadDataUrl(item.src, 'home', 'gallery');
+            }
+            return cloned;
+        }
+
         async function testSupabaseConnection() {
             const cfg = getSupabaseConfig();
             const statusEl = document.getElementById('supabase-status');
@@ -605,13 +662,15 @@ Chile"
             if (saved) { try { return JSON.parse(saved); } catch(e) {} }
             return { paypalClientId: '', stripePublishableKey: '', stripeEdgeUrl: '' };
         }
-        function savePaymentConfig() {
+        async function savePaymentConfig() {
             const cfg = {
                 paypalClientId: document.getElementById('paypal-client-id').value.trim(),
                 stripePublishableKey: document.getElementById('stripe-publishable-key').value.trim(),
                 stripeEdgeUrl: document.getElementById('stripe-edge-url').value.trim()
             };
             localStorage.setItem('jovafam_payments', JSON.stringify(cfg));
+            settings = { ...settings, ...cfg };
+            if (siteClient) { try { await setSiteData('settings', settings); } catch(e) { console.error(e); } }
             toast('Configuracion de pagos guardada');
         }
         function loadPaymentConfig() {
@@ -634,6 +693,8 @@ Chile"
             if (!checkbox) return;
             const enabled = checkbox.checked;
             localStorage.setItem('jovafam_payments_enabled', enabled ? 'true' : 'false');
+            settings.paymentsEnabled = enabled;
+            if (siteClient) setSiteData('settings', settings).catch(console.error);
             updatePaymentsStatus();
         }
         function updatePaymentsStatus() {
@@ -675,6 +736,8 @@ Chile"
             if (saved) { try { cfg = JSON.parse(saved); } catch(e) {} }
             cfg.countries = countries.length > 0 ? countries : ['Estados Unidos'];
             localStorage.setItem('jovafam_settings', JSON.stringify(cfg));
+            settings = { ...settings, ...cfg };
+            if (siteClient) setSiteData('settings', settings).catch(console.error);
             toast('Paises guardados');
         }
         function loadCountries() {
@@ -707,6 +770,8 @@ Chile"
             cfg.priceText = priceText;
             cfg.priceImage = priceImage;
             localStorage.setItem('jovafam_settings', JSON.stringify(cfg));
+            settings = { ...settings, ...cfg };
+            if (siteClient) setSiteData('settings', settings).catch(console.error);
             toast('Precios guardados');
         }
         function loadPricing() {
@@ -849,38 +914,63 @@ Chile"
             if (panel) panel.classList.add('hidden');
         }
 
-function loadData() {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) { try { catalog = JSON.parse(saved); } catch(e) {} }
-            const savedSettings = localStorage.getItem(SETTINGS_KEY);
-            if (savedSettings) { try { settings = JSON.parse(savedSettings); } catch(e) {} }
-            const savedHome = localStorage.getItem(HOME_KEY);
-            if (savedHome) { try { home = JSON.parse(savedHome); } catch(e) {} }
+async function loadData() {
             loadSupabaseConfig();
+            initSiteClient();
+            const savedCatalog = localStorage.getItem(STORAGE_KEY);
+            const savedSettings = localStorage.getItem(SETTINGS_KEY);
+            const savedHome = localStorage.getItem(HOME_KEY);
+            if (savedCatalog) { try { catalog = JSON.parse(savedCatalog); } catch(e) {} }
+            if (savedSettings) { try { settings = JSON.parse(savedSettings); } catch(e) {} }
+            if (savedHome) { try { home = JSON.parse(savedHome); } catch(e) {} }
+            if (!siteClient) return;
+            try {
+                const remoteCatalog = await getSiteData('catalog');
+                const remoteSettings = await getSiteData('settings');
+                const remoteHome = await getSiteData('home');
+                if (remoteCatalog) catalog = remoteCatalog;
+                if (remoteSettings) settings = { ...settings, ...remoteSettings };
+                if (remoteHome) home = remoteHome;
+                // First online load: migrate any old localStorage data (including base64 images).
+                if (!remoteCatalog && savedCatalog) { catalog = await normalizeRemoteImages(catalog); await setSiteData('catalog', catalog); }
+                if (!remoteHome && savedHome) { home = await normalizeRemoteImages(home); await setSiteData('home', home); }
+                if (!remoteSettings && savedSettings) await setSiteData('settings', settings);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(catalog));
+                localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+                localStorage.setItem(HOME_KEY, JSON.stringify(home));
+            } catch (e) {
+                console.error('Error cargando datos remotos:', e);
+                toast('No se pudo conectar con Supabase. Usando datos locales.');
+            }
+            renderProducts(); updateStats(); renderHomePanels();
         }
         function saveCatalog() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(catalog));
             renderProducts(); updateStats();
+            if (siteClient) setSiteData('catalog', catalog).catch(e => console.error('Error guardando catalogo:', e));
         }
-        function saveSettings() {
+        async function saveSettings() {
             settings.whatsapp = document.getElementById('settings-whatsapp').value.replace(/\D/g, '');
             settings.priceText = parseFloat(document.getElementById('settings-price-text').value) || 3;
             settings.priceFront = parseFloat(document.getElementById('settings-price-front').value) || 8;
             settings.priceBack = parseFloat(document.getElementById('settings-price-back').value) || 2;
             settings.priceSides = parseFloat(document.getElementById('settings-price-sides').value) || 1;
             localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+            if (siteClient) { try { await setSiteData('settings', settings); } catch(e) { console.error(e); } }
             toast('Configuracion guardada');
         }
         function saveHome() {
             localStorage.setItem(HOME_KEY, JSON.stringify(home));
+            renderHomePanels();
+            if (siteClient) setSiteData('home', home).catch(e => console.error('Error guardando inicio:', e));
             toast('Inicio actualizado');
         }
 
-        function login() {
+        async function login() {
             if (document.getElementById('admin-pass').value === DEFAULT_PASSWORD) {
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('admin-panel').classList.remove('hidden');
-                loadData();
+                await loadData();
                 document.getElementById('settings-whatsapp').value = settings.whatsapp || '';
                 document.getElementById('settings-price-text').value = (settings.priceText || 3).toFixed(2);
                 document.getElementById('settings-price-front').value = (settings.priceFront !== undefined ? settings.priceFront : 8).toFixed(2);
@@ -1248,39 +1338,18 @@ function loadData() {
             const product = catalog.products[pIndex];
             if (!product.images) product.images = [];
             const defaultColor = product.colors[0]?.id || 'black';
-            const validFiles = files.filter(f => f.size <= 3 * 1024 * 1024);
-
-            if (validFiles.length === 0) {
-                toast('Las imagenes deben ser menor a 3MB');
-                return;
-            }
-
+            const validFiles = files.filter(f => f.type.startsWith('image/') && f.size <= 5 * 1024 * 1024);
+            if (validFiles.length === 0) { toast('Las imagenes deben ser menores de 5MB'); return; }
+            if (!siteClient) { toast('Configura Supabase antes de subir imagenes'); return; }
             let loaded = 0;
-            const total = validFiles.length;
-
             for (const file of validFiles) {
                 try {
-                    const dataUrl = await readFileAsDataURL(file);
-                    product.images.push({ src: dataUrl, colorId: defaultColor, view: 'front' });
+                    const url = await uploadSiteFile(file, 'catalog');
+                    product.images.push({ src: url, colorId: defaultColor, view: 'front' });
                     loaded++;
-                } catch(err) {
-                    console.error('Error leyendo archivo:', err);
-                }
+                } catch(err) { console.error('Error subiendo archivo:', err); toast('Error subiendo '+file.name+': '+err.message); }
             }
-
-            if (loaded > 0) {
-                saveCatalog();
-                toast(loaded + ' foto(s) subida(s)');
-            }
-        }
-
-        function readFileAsDataURL(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = e => resolve(e.target.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
+            if (loaded > 0) { saveCatalog(); toast(loaded + ' foto(s) subida(s)'); }
         }
 
         function removeImage(pIndex, iIndex) {
@@ -1435,16 +1504,14 @@ function loadData() {
             home.products[i][field] = value;
             saveHome();
         }
-        function updateHomeProductImage(i, input) {
+        async function updateHomeProductImage(i, input) {
             const file = input.files[0];
             if (!file) return;
-            const reader = new FileReader();
-            reader.onload = e => {
-                if (!home.products) home.products = [];
-                home.products[i].image = e.target.result;
+            try {
+                if (!siteClient) throw new Error('Configura Supabase antes de subir imagenes');
+                home.products[i].image = await uploadSiteFile(file, 'home');
                 saveHome(); renderHomePanels();
-            };
-            reader.readAsDataURL(file);
+            } catch(e) { toast('Error subiendo imagen: '+e.message); }
             input.value = '';
         }
         function removeHomeProduct(i) {
@@ -1459,16 +1526,15 @@ function loadData() {
             home.gallery.push({ src: '', span: '' });
             saveHome(); renderHomePanels();
         }
-        function updateHomeGalleryImage(i, input) {
+        async function updateHomeGalleryImage(i, input) {
             const file = input.files[0];
             if (!file) return;
-            const reader = new FileReader();
-            reader.onload = e => {
+            try {
+                if (!siteClient) throw new Error('Configura Supabase antes de subir imagenes');
                 if (!home.gallery) home.gallery = [];
-                home.gallery[i].src = e.target.result;
+                home.gallery[i].src = await uploadSiteFile(file, 'home');
                 saveHome(); renderHomePanels();
-            };
-            reader.readAsDataURL(file);
+            } catch(e) { toast('Error subiendo imagen: '+e.message); }
             input.value = '';
         }
         function removeHomeGallery(i) {
@@ -1494,16 +1560,16 @@ function loadData() {
             saveHome(); renderHomePanels();
         }
 
-        function handleThumbnailUpload(pIndex, input) {
+        async function handleThumbnailUpload(pIndex, input) {
             const file = input.files[0];
             if (!file) return;
-            if (file.size > 3 * 1024 * 1024) { toast('Maximo 3MB'); return; }
-            const reader = new FileReader();
-            reader.onload = e => {
-                updateProduct(pIndex, 'thumbnail', e.target.result);
+            try {
+                if (!siteClient) throw new Error('Configura Supabase antes de subir imagenes');
+                if (file.size > 5 * 1024 * 1024) throw new Error('Maximo 5MB');
+                const url = await uploadSiteFile(file, 'catalog');
+                updateProduct(pIndex, 'thumbnail', url);
                 toast('Portada actualizada');
-            };
-            reader.readAsDataURL(file);
+            } catch(e) { toast('Error subiendo portada: '+e.message); }
             input.value = '';
         }
         function setThumbnailFromGallery(pIndex, src) {
