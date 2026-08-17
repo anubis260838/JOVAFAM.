@@ -638,15 +638,15 @@
         const CANVAS_W = 800;
         const CANVAS_H = 1000;
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             state.canvas = document.getElementById('main-canvas');
             state.ctx = state.canvas.getContext('2d');
             state.canvas.width = CANVAS_W;
             state.canvas.height = CANVAS_H;
 
             initSupabase();
-            loadCatalog();
-            loadSettings();
+            await loadCatalog();
+            await loadSettings();
             initEvents();
             initCountryCity();
             resizeCanvas();
@@ -654,35 +654,35 @@
             updatePrice();
         });
 
-        function loadCatalog() {
+        async function loadCatalog() {
             const saved = localStorage.getItem('jovafam_catalog');
-            if (saved) {
-                try { state.catalog = JSON.parse(saved); } catch(e) {}
-            }
-            if (!state.catalog) {
-                state.catalog = getDefaultCatalog();
-            }
+            if (saved) { try { state.catalog = JSON.parse(saved); } catch(e) {} }
+            if (!state.catalog) state.catalog = getDefaultCatalog();
+            try {
+                const cfg = getSupabaseConfig();
+                if (cfg.url && cfg.key && supabaseClient) {
+                    const { data, error } = await supabaseClient.from('site_data').select('value').eq('key','catalog').maybeSingle();
+                    if (!error && data?.value) state.catalog = data.value;
+                }
+            } catch(e) { console.warn('No se pudo cargar catalogo remoto:', e); }
+            localStorage.setItem('jovafam_catalog', JSON.stringify(state.catalog));
             renderProductDropdown();
         }
 
-        function loadSettings() {
+        async function loadSettings() {
+            state.settings = { whatsapp: '', priceText: 3.00, priceImage: 8.00, priceFront: 8.00, priceBack: 2.00, priceSides: 1.00, discounts: [] };
             const saved = localStorage.getItem('jovafam_settings');
-            if (saved) {
-                try { state.settings = JSON.parse(saved); } catch(e) {}
-            }
-            if (!state.settings) {
-                state.settings = { whatsapp: '', priceText: 3.00, priceImage: 8.00, priceFront: 8.00, priceBack: 2.00, priceSides: 1.00, discounts: [] };
-            }
-            // Cargar configuracion de pagos
+            if (saved) { try { state.settings = { ...state.settings, ...JSON.parse(saved) }; } catch(e) {} }
+            try {
+                const cfg = getSupabaseConfig();
+                if (cfg.url && cfg.key && supabaseClient) {
+                    const { data, error } = await supabaseClient.from('site_data').select('value').eq('key','settings').maybeSingle();
+                    if (!error && data?.value) state.settings = { ...state.settings, ...data.value };
+                }
+            } catch(e) { console.warn('No se pudo cargar configuracion remota:', e); }
+            localStorage.setItem('jovafam_settings', JSON.stringify(state.settings));
             const paymentSaved = localStorage.getItem('jovafam_payments');
-            if (paymentSaved) {
-                try {
-                    const pcfg = JSON.parse(paymentSaved);
-                    state.settings.paypalClientId = pcfg.paypalClientId || '';
-                    state.settings.stripePublishableKey = pcfg.stripePublishableKey || '';
-                    state.settings.stripeEdgeUrl = pcfg.stripeEdgeUrl || '';
-                } catch(e) {}
-            }
+            if (paymentSaved) { try { state.settings = { ...state.settings, ...JSON.parse(paymentSaved) }; } catch(e) {} }
         }
 
         function getDefaultCatalog() {
