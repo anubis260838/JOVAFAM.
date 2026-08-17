@@ -1,0 +1,2312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JOVAFAM Studio | Crea tu Diseno</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Bebas+Neue&family=Oswald:wght@400;600&family=Lobster&family=Pacifico&family=Montserrat:wght@400;700&family=Raleway:wght@400;700&family=Anton&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'display': ['Playfair Display', 'serif'],
+                        'sans': ['Inter', 'sans-serif'],
+                        'mono': ['Space Grotesk', 'monospace'],
+                    },
+                    colors: {
+                        'luxury': {
+                            900: '#0a0a0a', 800: '#141414', 700: '#1c1c1c',
+                            600: '#2a2a2a', 500: '#3a3a3a',
+                            gold: '#c9a96e', 'gold-light': '#e8d5a3', cream: '#f5f0e8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: #0a0a0a; color: #f5f0e8; font-family: 'Inter', sans-serif; }
+        .gold-shimmer {
+            background: linear-gradient(90deg, #c9a96e 0%, #e8d5a3 25%, #c9a96e 50%, #e8d5a3 75%, #c9a96e 100%);
+            background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; animation: shimmer 3s linear infinite;
+        }
+        @keyframes shimmer { to { background-position: 200% center; } }
+        .upload-zone {
+            border: 2px dashed rgba(201, 169, 110, 0.3);
+            transition: all 0.3s ease; cursor: pointer;
+        }
+        .upload-zone:hover, .upload-zone.drag-active {
+            border-color: #c9a96e; background: rgba(201, 169, 110, 0.05);
+        }
+        .color-btn {
+            width: 32px; height: 32px; border-radius: 50%;
+            border: 2px solid #3a3a3a; cursor: pointer;
+            transition: all 0.2s ease; flex-shrink: 0;
+        }
+        .color-btn:hover { transform: scale(1.15); }
+        .color-btn.active { border-color: #c9a96e; box-shadow: 0 0 0 2px rgba(201,169,110,0.3); }
+        .pos-btn {
+            transition: all 0.2s ease; border: 1px solid #3a3a3a;
+        }
+        .pos-btn:hover { border-color: rgba(201, 169, 110, 0.5); }
+        .pos-btn.active {
+            background: rgba(201, 169, 110, 0.2);
+            border-color: #c9a96e; color: #c9a96e;
+        }
+        input[type="range"] {
+            -webkit-appearance: none; width: 100%; height: 6px;
+            background: #3a3a3a; border-radius: 3px; outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 18px; height: 18px;
+            background: #c9a96e; border-radius: 50%; cursor: pointer;
+        }
+        .canvas-area {
+            background: linear-gradient(135deg, #141414 0%, #1c1c1c 100%);
+            position: relative; overflow: hidden; touch-action: none;
+        }
+        .canvas-area::before {
+            content: ''; position: absolute; inset: 0;
+            background-image: 
+                linear-gradient(rgba(201,169,110,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(201,169,110,0.03) 1px, transparent 1px);
+            background-size: 30px 30px; pointer-events: none;
+        }
+        .modal {
+            display: none; position: fixed; inset: 0; z-index: 100;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal.active { display: flex; }
+        .modal-box {
+            background: #141414; border: 1px solid #3a3a3a;
+            border-radius: 16px; max-width: 500px; width: 100%;
+            max-height: 90vh; overflow-y: auto;
+            animation: modalIn 0.3s ease;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .layer-item {
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+        .layer-item:hover { background: rgba(201,169,110,0.05); }
+        .layer-item.active {
+            background: rgba(201,169,110,0.1);
+            border-color: rgba(201,169,110,0.4);
+        }
+        .product-selector-item {
+            transition: all 0.2s ease;
+        }
+        .product-selector-item:hover { background: rgba(201,169,110,0.08); }
+        .product-selector-item.active { background: rgba(201,169,110,0.15); border-color: #c9a96e; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c9a96e; }
+        .noise {
+            position: fixed; inset: 0; pointer-events: none; z-index: 9998;
+            opacity: 0.02;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 3px solid rgba(201,169,110,0.2);
+            border-top-color: #c9a96e; border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .view-badge {
+            position: absolute; top: 12px; left: 12px;
+            background: rgba(10,10,10,0.8); backdrop-filter: blur(8px);
+            border: 1px solid rgba(201,169,110,0.3);
+            padding: 6px 12px; border-radius: 8px;
+            font-family: 'Space Grotesk', monospace;
+            font-size: 11px; text-transform: uppercase;
+            letter-spacing: 0.1em; color: #c9a96e;
+            pointer-events: none; z-index: 5;
+        }
+        .search-select {
+            position: relative;
+        }
+        .search-select-options {
+            position: absolute; top: 100%; left: 0; right: 0;
+            max-height: 200px; overflow-y: auto;
+            background: #141414; border: 1px solid #3a3a3a;
+            border-radius: 8px; z-index: 50; margin-top: 4px;
+            display: none;
+        }
+        .search-select-options.active { display: block; }
+        .search-select-option {
+            padding: 8px 12px; cursor: pointer; font-size: 12px;
+            color: #f5f0e8; border-bottom: 1px solid #2a2a2a;
+        }
+        .search-select-option:hover { background: rgba(201,169,110,0.1); }
+        .search-select-option:last-child { border-bottom: none; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<base target="_blank">
+<base target="_blank">
+</head>
+<body>
+    <div class="noise"></div>
+
+    <header class="fixed top-0 left-0 w-full z-50 bg-luxury-900/90 backdrop-blur-xl border-b border-luxury-700/30">
+        <div class="max-w-7xl mx-auto px-4 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <a href="index.html" class="flex items-center gap-3">
+                    <div class="w-8 h-8 border border-luxury-gold/50 rounded-full flex items-center justify-center">
+                        <span class="font-display text-luxury-gold text-sm">J</span>
+                    </div>
+                    <span class="font-display text-xl text-luxury-cream">JOVAFAM <span class="text-luxury-gold text-xs font-mono uppercase tracking-widest ml-2">Studio</span></span>
+                </a>
+                <div class="flex items-center gap-3">
+                    <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-luxury-800/50 rounded-lg border border-luxury-700/50">
+                        <svg class="w-4 h-4 text-luxury-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                        </svg>
+                        <span id="size-display" class="font-mono text-xs text-luxury-gold">Sin diseno</span>
+                    </div>
+                    <div class="bg-luxury-gold px-4 py-2 rounded-lg">
+                        <span class="font-mono text-sm font-bold text-luxury-900">$<span id="price-tag">0.00</span></span>
+                    </div>
+                    <button onclick="openOrder()" class="hidden sm:block px-5 py-2 bg-luxury-cream text-luxury-900 font-mono text-xs uppercase tracking-widest font-semibold rounded-lg hover:bg-luxury-gold transition-colors">
+                        Pedir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="pt-20 pb-8">
+        <div class="max-w-7xl mx-auto px-4 lg:px-8">
+            <div class="text-center mb-6">
+                <h1 class="font-display text-3xl md:text-4xl text-luxury-cream mb-2">
+                    Crea tu <span class="italic gold-shimmer">Diseno</span>
+                </h1>
+                <p class="text-luxury-500 text-sm">Elige prenda, color y vista. Sube tu imagen, genera con AI o anade texto.</p>
+            </div>
+
+            <div class="grid lg:grid-cols-12 gap-4">
+                <!-- LEFT -->
+                <div class="lg:col-span-3 space-y-3 max-h-[calc(100vh-120px)] overflow-y-auto pr-1">
+
+                    <div class="bg-luxury-800/50 border border-luxury-700/50 rounded-xl p-4">
+                        <h3 class="font-mono text-xs uppercase tracking-widest text-luxury-gold mb-3">Subir Imagen</h3>
+                        <div id="upload-zone" class="upload-zone rounded-lg p-5 text-center">
+                            <input type="file" id="file-input" accept="image/png,image/jpeg,image/jpg,image/webp" class="hidden">
+                            <svg class="w-8 h-8 text-luxury-gold/50 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            <p class="text-luxury-500 text-xs mb-1">Click o arrastra imagen</p>
+                            <p class="text-luxury-600 text-[10px]">PNG, JPG, WEBP hasta 10MB</p>
+                        </div>
+                        <button onclick="openAIModal()" class="mt-3 w-full py-2.5 border border-luxury-gold/30 rounded-lg flex items-center justify-center gap-2 hover:bg-luxury-gold/10 transition-colors">
+                            <svg class="w-4 h-4 text-luxury-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                            </svg>
+                            <span class="font-mono text-xs text-luxury-gold uppercase tracking-wider">Generar con AI</span>
+                        </button>
+                    </div>
+
+                    <div id="layers-panel" class="bg-luxury-800/50 border border-luxury-700/50 rounded-xl p-4 hidden">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-mono text-xs uppercase tracking-widest text-luxury-gold">Capas &middot; <span id="current-view-label" class="text-luxury-gold">Frente</span></h3>
+                            <span id="layer-count" class="text-[10px] text-luxury-600 font-mono">0</span>
+                        </div>
+                        <div id="layers-list" class="space-y-1.5 max-h-48 overflow-y-auto pr-1"></div>
+                    </div>
+
+                    <div id="controls-panel" class="bg-luxury-800/50 border border-luxury-700/50 rounded-xl p-4 hidden">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-mono text-xs uppercase tracking-widest text-luxury-gold">Ajustar Capa</h3>
+                            <button onclick="deleteSelectedLayer()" class="text-red-400 hover:text-red-300 text-xs" title="Eliminar capa">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex justify-between text-[10px] text-luxury-500 uppercase tracking-wider mb-1">
+                                    <span>Tamano</span><span id="scale-val">30%</span>
+                                </div>
+                                <input type="range" id="scale-slider" min="5" max="70" value="30">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[10px] text-luxury-500 uppercase tracking-wider mb-1">
+                                    <span>Rotacion</span><span id="rotate-val">0&deg;</span>
+                                </div>
+                                <input type="range" id="rotate-slider" min="-180" max="180" value="0">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[10px] text-luxury-500 uppercase tracking-wider mb-1">
+                                    <span>Opacidad</span><span id="opacity-val">100%</span>
+                                </div>
+                                <input type="range" id="opacity-slider" min="10" max="100" value="100">
+                            </div>
+                            <div id="text-controls" class="hidden space-y-2 pt-2 border-t border-luxury-700/30">
+                                <div>
+                                    <span class="text-[10px] text-luxury-500 uppercase tracking-wider">Texto</span>
+                                    <input type="text" id="edit-text-content" class="w-full mt-1 bg-luxury-900 border border-luxury-700 rounded px-2 py-1.5 text-xs text-luxury-cream focus:border-luxury-gold focus:outline-none">
+                                </div>
+                                <div class="flex gap-2">
+                                    <input type="color" id="edit-text-color" value="#c9a96e" class="w-8 h-8 rounded bg-transparent border border-luxury-700 cursor-pointer">
+                                    <select id="edit-text-font" class="flex-1 bg-luxury-900 border border-luxury-700 rounded px-2 text-xs text-luxury-cream focus:border-luxury-gold focus:outline-none">
+                                        <option value="Playfair Display">Elegante</option>
+                                        <option value="Inter">Moderno</option>
+                                        <option value="Space Grotesk">Tecnico</option>
+                                        <option value="Bebas Neue">Bold</option>
+                                        <option value="Oswald">Condensada</option>
+                                        <option value="Lobster">Script</option>
+                                        <option value="Pacifico">Handwritten</option>
+                                        <option value="Montserrat">Geometric</option>
+                                        <option value="Raleway">Minimal</option>
+                                        <option value="Anton">Impact</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-5 gap-2 pt-1">
+                                <button onclick="flipLayer('h')" class="p-2 bg-luxury-700/50 rounded-lg hover:bg-luxury-gold/20 transition-colors" title="Voltear H">
+                                    <svg class="w-4 h-4 text-luxury-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                                </button>
+                                <button onclick="flipLayer('v')" class="p-2 bg-luxury-700/50 rounded-lg hover:bg-luxury-gold/20 transition-colors" title="Voltear V">
+                                    <svg class="w-4 h-4 text-luxury-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+                                </button>
+                                <button onclick="centerLayer()" class="p-2 bg-luxury-700/50 rounded-lg hover:bg-luxury-gold/20 transition-colors" title="Centrar">
+                                    <svg class="w-4 h-4 text-luxury-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                                </button>
+                                <button onclick="bringToFront()" class="p-2 bg-luxury-700/50 rounded-lg hover:bg-luxury-gold/20 transition-colors" title="Traer al frente">
+                                    <svg class="w-4 h-4 text-luxury-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                                </button>
+                                <button onclick="resetLayer()" class="p-2 bg-luxury-700/50 rounded-lg hover:bg-luxury-gold/20 transition-colors" title="Restablecer">
+                                    <svg class="w-4 h-4 text-luxury-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-luxury-800/50 border border-luxury-700/50 rounded-xl p-4">
+                        <h3 class="font-mono text-xs uppercase tracking-widest text-luxury-gold mb-3">Anadir Texto</h3>
+                        <input type="text" id="text-input" placeholder="Tu texto..." maxlength="50"
+                               class="w-full bg-luxury-900 border border-luxury-700 rounded-lg px-3 py-2.5 text-luxury-cream text-sm mb-2 focus:border-luxury-gold focus:outline-none">
+                        <div class="flex gap-2 mb-2">
+                            <input type="color" id="text-color" value="#c9a96e" class="w-10 h-9 rounded-lg bg-transparent border border-luxury-700 cursor-pointer">
+                            <select id="text-font" class="flex-1 bg-luxury-900 border border-luxury-700 rounded-lg px-2 text-luxury-cream text-xs focus:border-luxury-gold focus:outline-none">
+                                <option value="Playfair Display">Elegante</option>
+                                <option value="Inter">Moderno</option>
+                                <option value="Space Grotesk">Tecnico</option>
+                                <option value="Bebas Neue">Bold</option>
+                                <option value="Oswald">Condensada</option>
+                                <option value="Lobster">Script</option>
+                                <option value="Pacifico">Handwritten</option>
+                                <option value="Montserrat">Geometric</option>
+                                <option value="Raleway">Minimal</option>
+                                <option value="Anton">Impact</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-2 mb-2">
+                            <label class="flex-1 py-2 border border-luxury-gold/30 rounded-lg text-luxury-gold text-xs font-mono uppercase text-center hover:bg-luxury-gold/10 transition-colors cursor-pointer">
+                                <input type="file" id="font-upload" accept=".ttf,.otf,.woff,.woff2" class="hidden" onchange="handleFontUpload(this)">
+                                + Fuente Propia
+                            </label>
+                        </div>
+                        <button onclick="addText()" class="w-full py-2.5 bg-luxury-gold/20 text-luxury-gold rounded-lg font-mono text-xs uppercase tracking-wider hover:bg-luxury-gold/30 transition-colors">
+                            Anadir Texto
+                        </button>
+                        <p class="text-[10px] text-luxury-600 mt-2">Arrastra el texto en el canvas para moverlo. Selecciona una capa para editarla.</p>
+                    </div>
+                </div>
+
+                <!-- CENTER -->
+                <div class="lg:col-span-6">
+                    <div id="canvas-wrapper" class="canvas-area rounded-2xl aspect-[4/5] relative flex items-center justify-center">
+                        <div id="view-badge" class="view-badge hidden">Frente</div>
+                        <canvas id="main-canvas"></canvas>
+                        <div id="empty-state" class="text-center absolute pointer-events-none">
+                            <div class="w-16 h-16 rounded-full bg-luxury-gold/10 flex items-center justify-center mx-auto mb-3">
+                                <svg class="w-8 h-8 text-luxury-gold/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <p class="text-luxury-500">Selecciona una prenda</p>
+                            <p class="text-luxury-600 text-xs mt-1">Elige producto, color y vista</p>
+                        </div>
+                    </div>
+                    <button onclick="openOrder()" class="sm:hidden w-full mt-3 py-3 bg-luxury-cream text-luxury-900 font-mono text-sm uppercase tracking-widest font-semibold rounded-lg">
+                        Pedir Ahora - $<span id="mobile-price">0.00</span>
+                    </button>
+                </div>
+
+                <!-- RIGHT -->
+                <div class="lg:col-span-3 space-y-3 max-h-[calc(100vh-120px)] overflow-y-auto pr-1">
+
+                    <div class="bg-luxury-800/50 border border-luxury-700/50 rounded-xl p-4">
+                        <h3 class="font-mono text-xs uppercase tracking-widest text-luxury-gold mb-3">Prenda</h3>
+
+                        <div id="selected-product-display" class="flex items-center gap-3 p-3 bg-luxury-900/50 rounded-lg border border-luxury-700/50 cursor-pointer hover:border-luxury-gold/50 transition-colors" onclick="toggleProductDropdown()">
+                            <div id="selected-product-thumb" class="w-12 h-12 rounded-lg bg-luxury-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                <svg class="w-6 h-6 text-luxury-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p id="selected-product-name" class="text-sm text-luxury-cream truncate">Seleccionar prenda</p>
+                                <p id="selected-product-price" class="text-xs text-luxury-gold font-mono">-</p>
+                            </div>
+                            <svg id="product-dropdown-chevron" class="w-4 h-4 text-luxury-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </div>
+
+                        <div id="product-dropdown" class="hidden mt-2 bg-luxury-900/80 border border-luxury-700/50 rounded-lg overflow-hidden">
+                            <div class="p-2 border-b border-luxury-700/30">
+                                <input type="text" id="product-search" placeholder="Buscar prenda..." oninput="filterProductDropdown()"
+                                       class="w-full bg-luxury-800 border border-luxury-700 rounded px-3 py-1.5 text-xs text-luxury-cream focus:border-luxury-gold focus:outline-none">
+                            </div>
+                            <div id="product-dropdown-list" class="max-h-64 overflow-y-auto p-1"></div>
+                        </div>
+                    </div>
+
+                    <div id="product-options" class="hidden space-y-3">
+                        <div class="bg-luxury-800/50 border border-luxury-700/50 rounded-xl p-4">
+                            <h3 class="font-mono text-xs uppercase tracking-widest text-luxury-gold mb-3">Color</h3>
+                            <div id="color-list" class="flex gap-3 flex-wrap"></div>
+                        </div>
+
+                        <div class="bg-luxury-800/50 border border-luxury-700/50 rounded-xl p-4">
+                            <h3 class="font-mono text-xs uppercase tracking-widest text-luxury-gold mb-3">Vista</h3>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button class="pos-btn active py-2.5 px-3 rounded-lg text-xs font-mono uppercase text-center" onclick="setPosition(this, 'front')">Frente</button>
+                                <button class="pos-btn py-2.5 px-3 rounded-lg text-xs font-mono uppercase text-center text-luxury-500" onclick="setPosition(this, 'back')">Espalda</button>
+                                <button class="pos-btn py-2.5 px-3 rounded-lg text-xs font-mono uppercase text-center text-luxury-500" onclick="setPosition(this, 'left')">Lado Izq.</button>
+                                <button class="pos-btn py-2.5 px-3 rounded-lg text-xs font-mono uppercase text-center text-luxury-500" onclick="setPosition(this, 'right')">Lado Der.</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-800/50 border border-luxury-700/50 rounded-xl p-4">
+                            <h3 class="font-mono text-xs uppercase tracking-widest text-luxury-gold mb-3">Cantidad</h3>
+                            <div class="flex items-center gap-3">
+                                <button onclick="changeQty(-1)" class="w-10 h-10 rounded-lg bg-luxury-700 text-luxury-cream hover:bg-luxury-gold hover:text-luxury-900 transition-colors font-mono text-lg">-</button>
+                                <input type="number" id="qty-input" value="1" min="1" max="999" onchange="updateQtyFromInput()" class="flex-1 bg-luxury-900 border border-luxury-700 rounded-lg px-3 py-2 text-center text-luxury-cream font-mono text-sm focus:border-luxury-gold focus:outline-none">
+                                <button onclick="changeQty(1)" class="w-10 h-10 rounded-lg bg-luxury-700 text-luxury-cream hover:bg-luxury-gold hover:text-luxury-900 transition-colors font-mono text-lg">+</button>
+                            </div>
+                            <div id="discount-badge" class="hidden mt-2 px-3 py-1.5 bg-luxury-gold/10 border border-luxury-gold/30 rounded-lg text-center">
+                                <span class="text-xs text-luxury-gold font-mono">Descuento aplicado: -<span id="discount-percent">0</span>%</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-800/50 border border-luxury-700/50 rounded-xl p-4">
+                            <h3 class="font-mono text-xs uppercase tracking-widest text-luxury-gold mb-3">Precio</h3>
+                            <div class="space-y-1.5 text-sm">
+                                <div class="flex justify-between text-luxury-500"><span>Prenda</span><span id="base-price">$0.00</span></div>
+                                <div class="flex justify-between text-luxury-500"><span>Personalizacion</span><span id="transfer-price">$0.00</span></div>
+                                <div id="discount-row" class="hidden flex justify-between text-luxury-gold"><span>Descuento</span><span id="discount-amount">-$0.00</span></div>
+                                <div class="border-t border-luxury-700/50 pt-1.5 mt-1.5">
+                                    <div class="flex justify-between text-luxury-cream font-semibold"><span>Total</span><span class="text-luxury-gold" id="total-price">$0.00</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- AI Modal -->
+    <div id="ai-modal" class="modal" onclick="if(event.target===this)closeAIModal()">
+        <div class="modal-box p-6" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="font-display text-2xl text-luxury-cream">Generar con AI</h2>
+                <button onclick="closeAIModal()" class="text-luxury-500 hover:text-luxury-cream p-1">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <p class="text-luxury-500 text-sm mb-4">Describe el diseno que quieres. Generaremos una imagen unica.</p>
+            <textarea id="ai-prompt" rows="3" placeholder="Ej: Un tigre geometrico dorado, estilo minimalista..." maxlength="200"
+                      class="w-full bg-luxury-900 border border-luxury-700 rounded-lg px-4 py-3 text-luxury-cream text-sm mb-4 focus:border-luxury-gold focus:outline-none resize-none"></textarea>
+            <div class="flex gap-2 mb-4 flex-wrap">
+                <span class="text-xs text-luxury-600 bg-luxury-900 px-3 py-1.5 rounded-full cursor-pointer hover:text-luxury-gold transition-colors" onclick="setPrompt('Logo minimalista dorado y negro')">Logo</span>
+                <span class="text-xs text-luxury-600 bg-luxury-900 px-3 py-1.5 rounded-full cursor-pointer hover:text-luxury-gold transition-colors" onclick="setPrompt('Patron tropical vibrante')">Tropical</span>
+                <span class="text-xs text-luxury-600 bg-luxury-900 px-3 py-1.5 rounded-full cursor-pointer hover:text-luxury-gold transition-colors" onclick="setPrompt('Estilo tattoo blanco y negro')">Tattoo</span>
+                <span class="text-xs text-luxury-600 bg-luxury-900 px-3 py-1.5 rounded-full cursor-pointer hover:text-luxury-gold transition-colors" onclick="setPrompt('Abstracto fluido dorado')">Abstracto</span>
+            </div>
+            <button onclick="generateAI()" id="ai-btn" class="w-full py-3 bg-luxury-gold text-luxury-900 font-mono text-sm uppercase tracking-widest font-semibold rounded-lg hover:bg-luxury-gold-light transition-colors flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                Generar
+            </button>
+            <div id="ai-loading" class="hidden mt-4 text-center">
+                <div class="spinner mx-auto mb-2"></div>
+                <p class="text-luxury-500 text-xs">Creando diseno...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Modal -->
+    <div id="order-modal" class="modal" onclick="if(event.target===this)closeOrderModal()">
+        <div class="modal-box p-6" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="font-display text-2xl text-luxury-cream">Confirmar Pedido</h2>
+                <button onclick="closeOrderModal()" class="text-luxury-500 hover:text-luxury-cream p-1">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="bg-luxury-900/50 rounded-xl p-4 mb-4">
+                <div class="flex items-center gap-3 mb-3">
+                    <div id="order-preview" class="w-14 h-14 rounded-lg bg-luxury-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        <svg class="w-6 h-6 text-luxury-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm text-luxury-cream truncate" id="order-product-name">-</p>
+                        <p class="text-xs text-luxury-500" id="order-details">-</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-luxury-gold font-semibold" id="order-total">$0.00</p>
+                    </div>
+                </div>
+                <div id="order-design-summary" class="text-xs text-luxury-500 space-y-1 border-t border-luxury-700/30 pt-2"></div>
+            </div>
+            <form id="order-form" class="space-y-3" onsubmit="goToPayment(event)">
+                <!-- PASO 1: Datos de envio -->
+                <div id="step-shipping">
+                    <input type="text" name="nombre" placeholder="Nombre completo *" required
+                           class="w-full bg-luxury-900 border border-luxury-700 rounded-lg px-4 py-3 text-luxury-cream text-sm focus:border-luxury-gold focus:outline-none">
+                    <input type="email" name="email" placeholder="Correo electronico *" required
+                           class="w-full bg-luxury-900 border border-luxury-700 rounded-lg px-4 py-3 text-luxury-cream text-sm focus:border-luxury-gold focus:outline-none">
+                    <input type="tel" name="telefono" placeholder="Telefono / WhatsApp *" required
+                           class="w-full bg-luxury-900 border border-luxury-700 rounded-lg px-4 py-3 text-luxury-cream text-sm focus:border-luxury-gold focus:outline-none">
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-mono text-[10px] uppercase tracking-wider text-luxury-500 mb-1">Pais *</label>
+                            <input type="text" name="pais" value="Estados Unidos" required
+                                   class="w-full bg-luxury-900 border border-luxury-700 rounded-lg px-4 py-3 text-luxury-cream text-sm focus:border-luxury-gold focus:outline-none"
+                                   list="country-list">
+                            <datalist id="country-list"></datalist>
+                        </div>
+                        <div>
+                            <label class="block font-mono text-[10px] uppercase tracking-wider text-luxury-500 mb-1">Ciudad *</label>
+                            <input type="text" name="ciudad" placeholder="Ej: New York" required
+                                   class="w-full bg-luxury-900 border border-luxury-700 rounded-lg px-4 py-3 text-luxury-cream text-sm focus:border-luxury-gold focus:outline-none">
+                        </div>
+                    </div>
+
+                    <input type="text" name="direccion" placeholder="Direccion completa *" required
+                           class="w-full bg-luxury-900 border border-luxury-700 rounded-lg px-4 py-3 text-luxury-cream text-sm focus:border-luxury-gold focus:outline-none">
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="relative search-select">
+                            <label class="block font-mono text-[10px] uppercase tracking-wider text-luxury-500 mb-1">Talla *</label>
+                            <select name="talla" required
+                                    class="w-full bg-luxury-900 border border-luxury-700 rounded-lg px-4 py-3 text-luxury-cream text-sm focus:border-luxury-gold focus:outline-none">
+                                <option value="">Selecciona talla</option>
+                                <option value="XS">XS</option>
+                                <option value="S">S</option>
+                                <option value="M">M</option>
+                                <option value="L">L</option>
+                                <option value="XL">XL</option>
+                                <option value="XXL">XXL</option>
+                                <option value="3XL">3XL</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-mono text-[10px] uppercase tracking-wider text-luxury-500 mb-1">Codigo postal</label>
+                            <input type="text" name="postal_code" placeholder="Ej: 110111"
+                                   class="w-full bg-luxury-900 border border-luxury-700 rounded-lg px-4 py-3 text-luxury-cream text-sm focus:border-luxury-gold focus:outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block font-mono text-[10px] uppercase tracking-wider text-luxury-500 mb-1">Apartamento / Casa / Interior / Info adicional</label>
+                        <input type="text" name="address_extra" placeholder="Apto 301, Torre B, etc."
+                               class="w-full bg-luxury-900 border border-luxury-700 rounded-lg px-4 py-3 text-luxury-cream text-sm focus:border-luxury-gold focus:outline-none">
+                    </div>
+                    <textarea name="notas" placeholder="Notas adicionales..." rows="2" maxlength="300"
+                              class="w-full bg-luxury-900 border border-luxury-700 rounded-lg px-4 py-3 text-luxury-cream text-sm focus:border-luxury-gold focus:outline-none resize-none"></textarea>
+
+                    <div class="flex items-center justify-between pt-2">
+                        <span class="text-luxury-500 text-xs font-mono">* Campos obligatorios</span>
+                        <button type="submit"
+                                class="px-8 py-3 bg-luxury-gold text-luxury-900 rounded-lg font-mono text-xs uppercase tracking-wider font-semibold hover:bg-luxury-gold-light transition-all duration-300 shadow-lg shadow-luxury-gold/20">
+                            Continuar al pago
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PASO 2: Pago -->
+                <div id="step-payment" class="hidden">
+                    <div class="bg-luxury-900/50 border border-luxury-700/30 rounded-lg p-4 mb-4">
+                        <p class="font-mono text-[10px] uppercase tracking-wider text-luxury-gold mb-2">Resumen del pedido</p>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-luxury-500">Producto:</span>
+                            <span class="text-luxury-cream" id="payment-product-name"></span>
+                        </div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-luxury-500">Cantidad:</span>
+                            <span class="text-luxury-cream" id="payment-qty"></span>
+                        </div>
+                        <div class="flex justify-between text-sm border-t border-luxury-700/30 pt-2 mt-2">
+                            <span class="text-luxury-gold font-semibold">Total a pagar:</span>
+                            <span class="text-luxury-gold font-mono font-semibold" id="payment-total"></span>
+                        </div>
+                    </div>
+
+                    <p class="font-mono text-[10px] uppercase tracking-wider text-luxury-gold mb-3">Selecciona metodo de pago</p>
+
+                    <!-- PayPal -->
+                    <div class="mb-4">
+                        <div id="paypal-button-container" class="min-h-[45px]"></div>
+                        <p id="paypal-error" class="text-red-400 text-xs mt-2 hidden">PayPal no esta configurado. Ve a Admin > Conexion para configurarlo.</p>
+                    </div>
+
+                    <div class="relative flex items-center justify-center my-4">
+                        <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-luxury-700/30"></div></div>
+                        <span class="relative bg-luxury-800 px-3 text-luxury-500 text-xs font-mono">O</span>
+                    </div>
+
+                    <!-- Stripe / Tarjeta -->
+                    <button type="button" onclick="payWithStripe()" id="stripe-pay-btn"
+                            class="w-full py-3 bg-luxury-700 text-luxury-cream rounded-lg font-mono text-xs uppercase tracking-wider font-semibold hover:bg-luxury-600 transition-all duration-300 flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                        Pagar con tarjeta de credito
+                    </button>
+                    <p id="stripe-error" class="text-red-400 text-xs mt-2 hidden">Stripe no esta configurado. Ve a Admin > Conexion para configurarlo.</p>
+
+                    <button type="button" onclick="backToShipping()" class="w-full mt-3 py-2 text-luxury-500 text-xs font-mono uppercase tracking-wider hover:text-luxury-cream transition-colors">
+                        ← Volver a datos de envio
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+
+        const VIEWS = [
+            { id: 'front', name: 'Frente' },
+            { id: 'back', name: 'Espalda' },
+            { id: 'left', name: 'Lado Izq.' },
+            { id: 'right', name: 'Lado Der.' }
+        ];
+
+        // Paises y ciudades
+        const COUNTRIES_DATA = {
+            "Colombia": ["Bogota","Medellin","Cali","Barranquilla","Cartagena","Cucuta","Bucaramanga","Pereira","Manizales","Armenia","Santa Marta","Ibague","Villavicencio","Pasto","Monteria","Neiva"],
+            "Mexico": ["Ciudad de Mexico","Guadalajara","Monterrey","Puebla","Tijuana","Leon","Cancun","Merida","Queretaro","Toluca","Acapulco","Chihuahua","Oaxaca","San Luis Potosi","Aguascalientes"],
+            "Argentina": ["Buenos Aires","Cordoba","Rosario","Mendoza","La Plata","Tucuman","Mar del Plata","Salta","Santa Fe","San Juan","Neuquen","Posadas","Bahia Blanca"],
+            "Chile": ["Santiago","Valparaiso","Concepcion","La Serena","Antofagasta","Temuco","Iquique","Puerto Montt","Rancagua","Arica","Talca","Chillan"],
+            "Peru": ["Lima","Arequipa","Trujillo","Chiclayo","Piura","Cusco","Huancayo","Iquitos","Tacna","Juliaca","Chimbote","Pucallpa"],
+            "Ecuador": ["Quito","Guayaquil","Cuenca","Ambato","Manta","Loja","Portoviejo","Riobamba","Ibarra","Esmeraldas","Machala","Santo Domingo"],
+            "Venezuela": ["Caracas","Maracaibo","Valencia","Barquisimeto","Maracay","Ciudad Guayana","San Cristobal","Maturin","Barcelona","Mérida","Cabimas","Punto Fijo"],
+            "Espana": ["Madrid","Barcelona","Valencia","Sevilla","Zaragoza","Malaga","Murcia","Palma","Las Palmas","Bilbao","Alicante","Cordoba","Valladolid"],
+            "Estados Unidos": ["Nueva York","Los Angeles","Chicago","Houston","Phoenix","Filadelfia","San Antonio","San Diego","Dallas","San Jose","Austin","Jacksonville","San Francisco","Columbus","Charlotte"],
+            "Panama": ["Panama","Colon","David","La Chorrera","Santiago","Chitre","Penonome","Bocas del Toro","Aguadulce","Changuinola"],
+            "Costa Rica": ["San Jose","Alajuela","Cartago","Heredia","Liberia","Puntarenas","Limon","San Ramon","Grecia","Turrialba"],
+            "Guatemala": ["Ciudad de Guatemala","Mixco","Villa Nueva","Quetzaltenango","San Miguel Petapa","Escuintla","San Juan Sacatepequez","Villa Canales","Chinautla","Chimaltenango"],
+            "Republica Dominicana": ["Santo Domingo","Santiago","La Romana","San Pedro de Macoris","Higuey","San Cristobal","Puerto Plata","Moca","Bonao","San Francisco de Macoris"],
+            "Honduras": ["Tegucigalpa","San Pedro Sula","La Ceiba","Choloma","El Progreso","Comayagua","Puerto Cortes","Danli","Juticalpa","Villanueva"],
+            "El Salvador": ["San Salvador","Santa Ana","Soyapango","San Miguel","Mejicanos","Apopa","Delgado","Ahuachapan","Ilopango","Colon"],
+            "Nicaragua": ["Managua","Leon","Masaya","Chinandega","Matagalpa","Esteli","Granada","Jinotega","Tipitapa","Bluefields"],
+            "Bolivia": ["Santa Cruz de la Sierra","La Paz","El Alto","Cochabamba","Oruro","Sucre","Tarija","Potosi","Trinidad","Cobija"],
+            "Paraguay": ["Asuncion","Ciudad del Este","San Lorenzo","Luque","Capiata","Lambaré","Fernando de la Mora","Limpio","Nemby","Encarnacion"],
+            "Uruguay": ["Montevideo","Salto","Ciudad de la Costa","Paysandu","Las Piedras","Rivera","Maldonado","Tacuarembo","Melo","Mercedes"],
+            "Brasil": ["Sao Paulo","Rio de Janeiro","Brasilia","Salvador","Fortaleza","Belo Horizonte","Manaus","Curitiba","Recife","Porto Alegre","Belem","Goiania","Guarulhos","Campinas","Sao Luis"],
+            "Cuba": ["La Habana","Santiago de Cuba","Camaguey","Holguin","Santa Clara","Guantanamo","Bayamo","Las Tunas","Cienfuegos","Pinar del Rio"],
+            "Puerto Rico": ["San Juan","Bayamon","Carolina","Ponce","Caguas","Guaynabo","Arecibo","Toa Baja","Toa Alta","Catano"]
+        };
+        const ALL_COUNTRIES = Object.keys(COUNTRIES_DATA).sort();
+
+        const state = {
+            product: null,
+            colorId: null,
+            view: 'front',
+            layers: { front: [], back: [], left: [], right: [] },
+            selectedLayerId: null,
+            canvas: null,
+            ctx: null,
+            isDragging: false,
+            dragStart: { x: 0, y: 0 },
+            dragLayerStart: { x: 0, y: 0 },
+            catalog: null,
+            settings: null,
+            productDropdownOpen: false,
+            images: {},
+            nextId: 1,
+            qty: 1
+        };
+
+        const CANVAS_W = 800;
+        const CANVAS_H = 1000;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            state.canvas = document.getElementById('main-canvas');
+            state.ctx = state.canvas.getContext('2d');
+            state.canvas.width = CANVAS_W;
+            state.canvas.height = CANVAS_H;
+
+            initSupabase();
+            loadCatalog();
+            loadSettings();
+            initEvents();
+            initCountryCity();
+            resizeCanvas();
+            renderCanvas();
+            updatePrice();
+        });
+
+        function loadCatalog() {
+            const saved = localStorage.getItem('jovafam_catalog');
+            if (saved) {
+                try { state.catalog = JSON.parse(saved); } catch(e) {}
+            }
+            if (!state.catalog) {
+                state.catalog = getDefaultCatalog();
+            }
+            renderProductDropdown();
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('jovafam_settings');
+            if (saved) {
+                try { state.settings = JSON.parse(saved); } catch(e) {}
+            }
+            if (!state.settings) {
+                state.settings = { whatsapp: '', priceText: 3.00, priceImage: 8.00, priceFront: 8.00, priceBack: 2.00, priceSides: 1.00, discounts: [] };
+            }
+            // Cargar configuracion de pagos
+            const paymentSaved = localStorage.getItem('jovafam_payments');
+            if (paymentSaved) {
+                try {
+                    const pcfg = JSON.parse(paymentSaved);
+                    state.settings.paypalClientId = pcfg.paypalClientId || '';
+                    state.settings.stripePublishableKey = pcfg.stripePublishableKey || '';
+                    state.settings.stripeEdgeUrl = pcfg.stripeEdgeUrl || '';
+                } catch(e) {}
+            }
+        }
+
+        function getDefaultCatalog() {
+            return {
+                products: [
+                    {
+                        id: 'oversized', name: 'Camiseta Oversized', basePrice: 24.90, active: true,
+                        imageScale: 0.85,
+                        thumbnail: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=200&q=80',
+                        colors: [
+                            { id: 'black', name: 'Negro', hex: '#1a1a1a', textHex: '#ffffff' },
+                            { id: 'white', name: 'Blanco', hex: '#f0ebe3', textHex: '#1a1a1a' },
+                            { id: 'grey', name: 'Gris', hex: '#6b6b6b', textHex: '#ffffff' }
+                        ],
+                        images: [
+                            { src: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=800&q=80', colorId: 'black', view: 'front' },
+                            { src: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&q=80', colorId: 'white', view: 'front' },
+                            { src: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=800&q=80', colorId: 'black', view: 'back' },
+                            { src: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&q=80', colorId: 'white', view: 'back' }
+                        ]
+                    },
+                    {
+                        id: 'classic', name: 'Camiseta Clasica', basePrice: 22.90, active: true,
+                        imageScale: 0.85,
+                        thumbnail: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=200&q=80',
+                        colors: [
+                            { id: 'black', name: 'Negro', hex: '#1a1a1a', textHex: '#ffffff' },
+                            { id: 'white', name: 'Blanco', hex: '#f0ebe3', textHex: '#1a1a1a' }
+                        ],
+                        images: [
+                            { src: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=800&q=80', colorId: 'black', view: 'front' },
+                            { src: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&q=80', colorId: 'white', view: 'front' }
+                        ]
+                    },
+                    {
+                        id: 'hoodie', name: 'Sudadera Premium', basePrice: 49.90, active: true,
+                        colors: [
+                            { id: 'black', name: 'Negro', hex: '#1a1a1a', textHex: '#ffffff' },
+                            { id: 'white', name: 'Blanco', hex: '#f0ebe3', textHex: '#1a1a1a' },
+                            { id: 'grey', name: 'Gris', hex: '#6b6b6b', textHex: '#ffffff' }
+                        ],
+                        images: [
+                            { src: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=800&q=80', colorId: 'black', view: 'front' },
+                            { src: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=800&q=80', colorId: 'grey', view: 'front' }
+                        ]
+                    },
+                    {
+                        id: 'snapback', name: 'Gorra Snapback', basePrice: 19.90, active: true,
+                        colors: [
+                            { id: 'black', name: 'Negro', hex: '#1a1a1a', textHex: '#ffffff' },
+                            { id: 'white', name: 'Blanco', hex: '#f0ebe3', textHex: '#1a1a1a' }
+                        ],
+                        images: [
+                            { src: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=800&q=80', colorId: 'black', view: 'front' },
+                            { src: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=800&q=80', colorId: 'white', view: 'front' }
+                        ]
+                    }
+                ]
+            };
+        }
+
+        // ===== COUNTRY / CITY =====
+        function initCountryCity() {
+            // Cargar lista de países desde configuración
+            const countryList = document.getElementById('country-list');
+            if (!countryList) return;
+
+            let countries = ['Estados Unidos'];
+            try {
+                const saved = localStorage.getItem('jovafam_settings');
+                if (saved) {
+                    const cfg = JSON.parse(saved);
+                    if (cfg.countries && Array.isArray(cfg.countries) && cfg.countries.length > 0) {
+                        countries = cfg.countries;
+                    }
+                }
+            } catch(e) {}
+
+            countryList.innerHTML = countries.map(c => '<option value="' + c + '">').join('');
+        }
+        function showCountries() {
+            document.getElementById('country-options').classList.add('active');
+            document.getElementById('city-options').classList.remove('active');
+        }
+        function filterCountries(val) {
+            const opts = document.getElementById('country-options');
+            const filtered = ALL_COUNTRIES.filter(c => c.toLowerCase().includes(val.toLowerCase()));
+            opts.innerHTML = filtered.map(c => `<div class="search-select-option" onclick="selectCountry('${c}')">${c}</div>`).join('');
+            opts.classList.add('active');
+        }
+        function selectCountry(country) {
+            document.getElementById('country-search').value = country;
+            document.getElementById('country-value').value = country;
+            document.getElementById('country-options').classList.remove('active');
+            // Enable city
+            const citySearch = document.getElementById('city-search');
+            const cityOpts = document.getElementById('city-options');
+            citySearch.disabled = false;
+            citySearch.value = '';
+            document.getElementById('city-value').value = '';
+            citySearch.placeholder = 'Buscar ciudad...';
+            const cities = COUNTRIES_DATA[country] || [];
+            cityOpts.innerHTML = cities.map(c => `<div class="search-select-option" onclick="selectCity('${c.replace(/'/g,"\'")}')">${c}</div>`).join('');
+        }
+        function showCities() {
+            if (document.getElementById('city-search').disabled) return;
+            document.getElementById('city-options').classList.add('active');
+            document.getElementById('country-options').classList.remove('active');
+        }
+        function filterCities(val) {
+            const country = document.getElementById('country-value').value;
+            const cities = COUNTRIES_DATA[country] || [];
+            const filtered = cities.filter(c => c.toLowerCase().includes(val.toLowerCase()));
+            document.getElementById('city-options').innerHTML = filtered.map(c => `<div class="search-select-option" onclick="selectCity('${c.replace(/'/g,"\'")}')">${c}</div>`).join('');
+            document.getElementById('city-options').classList.add('active');
+        }
+        function selectCity(city) {
+            document.getElementById('city-search').value = city;
+            document.getElementById('city-value').value = city;
+            document.getElementById('city-options').classList.remove('active');
+        }
+
+        // ===== QTY =====
+        function changeQty(delta) {
+            const input = document.getElementById('qty-input');
+            let val = parseInt(input.value) || 1;
+            val = Math.max(1, val + delta);
+            input.value = val;
+            state.qty = val;
+            updatePrice();
+        }
+        function updateQtyFromInput() {
+            const input = document.getElementById('qty-input');
+            let val = parseInt(input.value) || 1;
+            val = Math.max(1, val);
+            input.value = val;
+            state.qty = val;
+            updatePrice();
+        }
+
+        function initEvents() {
+            const uploadZone = document.getElementById('upload-zone');
+            const fileInput = document.getElementById('file-input');
+            uploadZone.addEventListener('click', () => fileInput.click());
+            uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('drag-active'); });
+            uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-active'));
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('drag-active');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) handleFile(files[0]);
+            });
+            fileInput.addEventListener('change', (e) => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+            state.canvas.addEventListener('pointerdown', onPointerDown);
+            state.canvas.addEventListener('pointermove', onPointerMove);
+            state.canvas.addEventListener('pointerup', onPointerUp);
+            state.canvas.addEventListener('pointerleave', onPointerUp);
+
+            document.getElementById('scale-slider').addEventListener('input', (e) => {
+                updateLayerProp('scale', parseInt(e.target.value));
+                document.getElementById('scale-val').textContent = e.target.value + '%';
+            });
+            document.getElementById('rotate-slider').addEventListener('input', (e) => {
+                updateLayerProp('rotation', parseInt(e.target.value));
+                document.getElementById('rotate-val').textContent = e.target.value + '°';
+            });
+            document.getElementById('opacity-slider').addEventListener('input', (e) => {
+                updateLayerProp('opacity', parseInt(e.target.value));
+                document.getElementById('opacity-val').textContent = e.target.value + '%';
+            });
+
+            document.getElementById('edit-text-content').addEventListener('input', (e) => {
+                updateLayerProp('content', e.target.value);
+            });
+            document.getElementById('edit-text-color').addEventListener('input', (e) => {
+                updateLayerProp('color', e.target.value);
+            });
+            document.getElementById('edit-text-font').addEventListener('change', (e) => {
+                updateLayerProp('font', e.target.value);
+            });
+
+            window.addEventListener('resize', resizeCanvas);
+
+            document.addEventListener('click', (e) => {
+                const dropdown = document.getElementById('product-dropdown');
+                const display = document.getElementById('selected-product-display');
+                if (state.productDropdownOpen && !dropdown.contains(e.target) && !display.contains(e.target)) {
+                    toggleProductDropdown();
+                }
+            });
+        }
+
+        function resizeCanvas() {
+            const wrapper = document.getElementById('canvas-wrapper');
+            const rect = wrapper.getBoundingClientRect();
+            const scale = Math.min(rect.width / CANVAS_W, rect.height / CANVAS_H);
+            state.canvas.style.width = (CANVAS_W * scale) + 'px';
+            state.canvas.style.height = (CANVAS_H * scale) + 'px';
+        }
+
+        function renderProductDropdown() {
+            const list = document.getElementById('product-dropdown-list');
+            list.innerHTML = '';
+            const products = (state.catalog?.products || []).filter(p => p.active);
+            products.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'product-selector-item flex items-center gap-3 p-3 rounded-lg cursor-pointer border border-transparent';
+                if (state.product && state.product.id === p.id) item.classList.add('active');
+                const thumb = p.thumbnail || (p.images && p.images[0] ? p.images[0].src : null);
+                item.innerHTML = `
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden border border-luxury-700/50" style="background:${p.colors[0]?.hex||'#1a1a1a'}">
+                        ${thumb ? `<img src="${thumb}" class="w-full h-full object-cover">` : `<span class="font-mono text-xs" style="color:${p.colors[0]?.textHex||'#fff'}">${p.id[0].toUpperCase()}</span>`}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm text-luxury-cream truncate">${p.name}</p>
+                        <p class="text-xs text-luxury-gold font-mono">$${p.basePrice.toFixed(2)}</p>
+                    </div>
+                `;
+                item.addEventListener('click', () => selectProduct(p));
+                list.appendChild(item);
+            });
+        }
+
+        function filterProductDropdown() {
+            const term = document.getElementById('product-search').value.toLowerCase();
+            const items = document.querySelectorAll('.product-selector-item');
+            items.forEach(item => {
+                const name = item.querySelector('p').textContent.toLowerCase();
+                item.style.display = name.includes(term) ? 'flex' : 'none';
+            });
+        }
+
+        function toggleProductDropdown() {
+            state.productDropdownOpen = !state.productDropdownOpen;
+            const dropdown = document.getElementById('product-dropdown');
+            const chevron = document.getElementById('product-dropdown-chevron');
+            if (state.productDropdownOpen) {
+                dropdown.classList.remove('hidden');
+                chevron.style.transform = 'rotate(180deg)';
+            } else {
+                dropdown.classList.add('hidden');
+                chevron.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function selectProduct(product) {
+            state.product = product;
+            state.colorId = product.colors[0]?.id || null;
+            state.view = 'front';
+            state.selectedLayerId = null;
+
+            document.getElementById('selected-product-name').textContent = product.name;
+            document.getElementById('selected-product-price').textContent = '$' + product.basePrice.toFixed(2);
+
+            const thumb = product.images && product.images[0] ? product.images[0].src : null;
+            const thumbEl = document.getElementById('selected-product-thumb');
+            if (thumb) {
+                thumbEl.innerHTML = `<img src="${thumb}" class="w-full h-full object-cover">`;
+            } else {
+                thumbEl.innerHTML = `<span class="font-mono text-xs" style="color:${product.colors[0]?.textHex||'#fff'}">${product.id[0].toUpperCase()}</span>`;
+            }
+
+            document.getElementById('product-options').classList.remove('hidden');
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('view-badge').classList.remove('hidden');
+
+            renderColors();
+            updateViewButtons();
+            renderLayersPanel();
+            updateControlsPanel();
+            renderCanvas();
+            updatePrice();
+            toggleProductDropdown();
+        }
+
+        function renderColors() {
+            const container = document.getElementById('color-list');
+            container.innerHTML = '';
+            if (!state.product) return;
+            state.product.colors.forEach(c => {
+                const btn = document.createElement('button');
+                btn.className = 'color-btn' + (state.colorId === c.id ? ' active' : '');
+                btn.style.backgroundColor = c.hex;
+                btn.title = c.name;
+                btn.addEventListener('click', () => {
+                    state.colorId = c.id;
+                    renderColors();
+                    renderCanvas();
+                });
+                container.appendChild(btn);
+            });
+        }
+
+        function setPosition(btn, view) {
+            state.view = view;
+            state.selectedLayerId = null;
+            updateViewButtons();
+            renderLayersPanel();
+            updateControlsPanel();
+            renderCanvas();
+        }
+
+        function updateViewButtons() {
+            const buttons = document.querySelectorAll('.pos-btn');
+            const viewNames = { front: 'Frente', back: 'Espalda', left: 'Lado Izq.', right: 'Lado Der.' };
+            buttons.forEach(btn => {
+                const onclickStr = btn.getAttribute('onclick') || '';
+                const match = onclickStr.match(/setPosition\(this, '(.+?)'\)/);
+                if (!match) return;
+                const v = match[1];
+                if (v === state.view) {
+                    btn.classList.add('active');
+                    btn.classList.remove('text-luxury-500');
+                } else {
+                    btn.classList.remove('active');
+                    btn.classList.add('text-luxury-500');
+                }
+            });
+            document.getElementById('current-view-label').textContent = viewNames[state.view];
+            document.getElementById('view-badge').textContent = viewNames[state.view];
+        }
+
+        function getCurrentLayers() {
+            return state.layers[state.view] || [];
+        }
+
+        function getSelectedLayer() {
+            return getCurrentLayers().find(l => l.id === state.selectedLayerId);
+        }
+
+        function addImageLayer(src) {
+            if (!state.product) { alert('Selecciona una prenda primero'); return; }
+            const layer = {
+                id: 'layer-' + state.nextId++,
+                type: 'image',
+                src: src,
+                x: CANVAS_W / 2,
+                y: CANVAS_H / 2,
+                scale: 30,
+                rotation: 0,
+                opacity: 100,
+                flipH: false,
+                flipV: false,
+                naturalWidth: 0,
+                naturalHeight: 0
+            };
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                layer.naturalWidth = img.width;
+                layer.naturalHeight = img.height;
+                state.images[src] = img;
+                renderCanvas();
+            };
+            img.onerror = () => {
+                img.crossOrigin = '';
+                img.src = src;
+            };
+            img.src = src;
+            state.layers[state.view].push(layer);
+            state.selectedLayerId = layer.id;
+            renderLayersPanel();
+            updateControlsPanel();
+            renderCanvas();
+            updatePrice();
+        }
+
+        function addText() {
+            if (!state.product) { alert('Selecciona una prenda primero'); return; }
+            const content = document.getElementById('text-input').value.trim();
+            if (!content) return;
+            const color = document.getElementById('text-color').value;
+            const font = document.getElementById('text-font').value;
+            const layer = {
+                id: 'layer-' + state.nextId++,
+                type: 'text',
+                content: content,
+                x: CANVAS_W / 2,
+                y: CANVAS_H / 2,
+                scale: 30,
+                rotation: 0,
+                opacity: 100,
+                flipH: false,
+                flipV: false,
+                color: color,
+                font: font
+            };
+            state.layers[state.view].push(layer);
+            state.selectedLayerId = layer.id;
+            document.getElementById('text-input').value = '';
+            renderLayersPanel();
+            updateControlsPanel();
+            renderCanvas();
+            updatePrice();
+        }
+
+        function renderLayersPanel() {
+            const panel = document.getElementById('layers-panel');
+            const list = document.getElementById('layers-list');
+            const layers = getCurrentLayers();
+            if (layers.length === 0) {
+                panel.classList.add('hidden');
+                return;
+            }
+            panel.classList.remove('hidden');
+            document.getElementById('layer-count').textContent = layers.length;
+            list.innerHTML = '';
+            [...layers].reverse().forEach(layer => {
+                const item = document.createElement('div');
+                item.className = 'layer-item flex items-center gap-3 p-2 rounded-lg cursor-pointer';
+                if (layer.id === state.selectedLayerId) item.classList.add('active');
+                const icon = layer.type === 'text'
+                    ? `<svg class="w-4 h-4 text-luxury-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/></svg>`
+                    : `<svg class="w-4 h-4 text-luxury-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`;
+                const label = layer.type === 'text' ? (layer.content.substring(0, 15) || 'Texto') : 'Imagen';
+                item.innerHTML = `${icon}<span class="text-xs text-luxury-400 truncate flex-1">${label}</span>`;
+                item.addEventListener('click', () => {
+                    state.selectedLayerId = layer.id;
+                    renderLayersPanel();
+                    updateControlsPanel();
+                    renderCanvas();
+                });
+                list.appendChild(item);
+            });
+        }
+
+        function updateControlsPanel() {
+            const panel = document.getElementById('controls-panel');
+            const layer = getSelectedLayer();
+            if (!layer) {
+                panel.classList.add('hidden');
+                return;
+            }
+            panel.classList.remove('hidden');
+
+            document.getElementById('scale-slider').value = layer.scale;
+            document.getElementById('scale-val').textContent = layer.scale + '%';
+            document.getElementById('rotate-slider').value = layer.rotation;
+            document.getElementById('rotate-val').textContent = layer.rotation + '°';
+            document.getElementById('opacity-slider').value = layer.opacity;
+            document.getElementById('opacity-val').textContent = layer.opacity + '%';
+
+            const textControls = document.getElementById('text-controls');
+            if (layer.type === 'text') {
+                textControls.classList.remove('hidden');
+                document.getElementById('edit-text-content').value = layer.content;
+                document.getElementById('edit-text-color').value = layer.color;
+                document.getElementById('edit-text-font').value = layer.font;
+            } else {
+                textControls.classList.add('hidden');
+            }
+        }
+
+        function updateLayerProp(prop, value) {
+            const layer = getSelectedLayer();
+            if (!layer) return;
+            layer[prop] = value;
+            renderCanvas();
+        }
+
+        function deleteSelectedLayer() {
+            const layers = getCurrentLayers();
+            const idx = layers.findIndex(l => l.id === state.selectedLayerId);
+            if (idx >= 0) {
+                layers.splice(idx, 1);
+                state.selectedLayerId = null;
+                renderLayersPanel();
+                updateControlsPanel();
+                renderCanvas();
+                updatePrice();
+            }
+        }
+
+        function bringToFront() {
+            const layers = getCurrentLayers();
+            const idx = layers.findIndex(l => l.id === state.selectedLayerId);
+            if (idx >= 0 && idx < layers.length - 1) {
+                const [layer] = layers.splice(idx, 1);
+                layers.push(layer);
+                renderLayersPanel();
+                renderCanvas();
+            }
+        }
+
+        function resetLayer() {
+            const layer = getSelectedLayer();
+            if (!layer) return;
+            layer.x = CANVAS_W / 2;
+            layer.y = CANVAS_H / 2;
+            layer.scale = 30;
+            layer.rotation = 0;
+            layer.opacity = 100;
+            layer.flipH = false;
+            layer.flipV = false;
+            updateControlsPanel();
+            renderCanvas();
+        }
+
+        function flipLayer(dir) {
+            const layer = getSelectedLayer();
+            if (!layer) return;
+            if (dir === 'h') layer.flipH = !layer.flipH;
+            if (dir === 'v') layer.flipV = !layer.flipV;
+            renderCanvas();
+        }
+
+        function centerLayer() {
+            const layer = getSelectedLayer();
+            if (!layer) return;
+            layer.x = CANVAS_W / 2;
+            layer.y = CANVAS_H / 2;
+            renderCanvas();
+        }
+
+        function renderCanvas() {
+            const ctx = state.ctx;
+            ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+            drawProductBackground();
+            const layers = getCurrentLayers();
+            layers.forEach(layer => { drawLayer(layer); });
+            if (state.selectedLayerId) {
+                const layer = getSelectedLayer();
+                if (layer) drawSelectionBox(layer);
+            }
+        }
+
+        function drawProductBackground() {
+            const ctx = state.ctx;
+            if (!state.product || !state.colorId) {
+                ctx.fillStyle = '#1c1c1c';
+                ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+                return;
+            }
+            const imgData = state.product.images?.find(i => i.colorId === state.colorId && i.view === state.view);
+            const src = imgData ? imgData.src : state.product.images?.find(i => i.colorId === state.colorId)?.src;
+
+            if (src && state.images[src]) {
+                const img = state.images[src];
+                const productScale = state.product.imageScale || 0.85;
+                const imgScale = imgData?.scale || 1;
+                const maxW = CANVAS_W * productScale * imgScale;
+                const maxH = CANVAS_H * productScale * imgScale;
+                const scale = Math.min(maxW / img.width, maxH / img.height);
+                const w = img.width * scale;
+                const h = img.height * scale;
+                const x = (CANVAS_W - w) / 2;
+                const y = (CANVAS_H - h) / 2;
+                ctx.drawImage(img, x, y, w, h);
+            } else if (src) {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    state.images[src] = img;
+                    renderCanvas();
+                };
+                img.onerror = () => {
+                    img.crossOrigin = '';
+                    img.src = src;
+                };
+                img.src = src;
+                ctx.fillStyle = state.product.colors.find(c => c.id === state.colorId)?.hex || '#1c1c1c';
+                ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+            } else {
+                ctx.fillStyle = state.product.colors.find(c => c.id === state.colorId)?.hex || '#1c1c1c';
+                ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+            }
+        }
+
+        function drawLayer(layer) {
+            const ctx = state.ctx;
+            ctx.save();
+            ctx.globalAlpha = layer.opacity / 100;
+            ctx.translate(layer.x, layer.y);
+            ctx.rotate((layer.rotation * Math.PI) / 180);
+            const s = layer.scale / 100;
+
+            if (layer.type === 'image') {
+                const img = state.images[layer.src];
+                if (img && img.complete && img.naturalWidth) {
+                    const w = img.width * s;
+                    const h = img.height * s;
+                    ctx.scale(layer.flipH ? -1 : 1, layer.flipV ? -1 : 1);
+                    ctx.drawImage(img, -w / 2, -h / 2, w, h);
+                } else if (layer.src && !state.images[layer.src]) {
+                    const newImg = new Image();
+                    newImg.crossOrigin = 'anonymous';
+                    newImg.onload = () => {
+                        state.images[layer.src] = newImg;
+                        renderCanvas();
+                    };
+                    newImg.onerror = () => {
+                        newImg.crossOrigin = '';
+                        newImg.src = layer.src;
+                    };
+                    newImg.src = layer.src;
+                }
+            } else if (layer.type === 'text') {
+                ctx.scale(layer.flipH ? -1 : 1, layer.flipV ? -1 : 1);
+                ctx.font = `bold ${120 * s}px "${layer.font}", sans-serif`;
+                ctx.fillStyle = layer.color;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(layer.content, 0, 0);
+            }
+            ctx.restore();
+        }
+
+        function drawSelectionBox(layer) {
+            const ctx = state.ctx;
+            ctx.save();
+            ctx.strokeStyle = '#c9a96e';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            const s = layer.scale / 100;
+            let w, h;
+            if (layer.type === 'image') {
+                const img = state.images[layer.src];
+                if (img) { w = img.width * s; h = img.height * s; }
+                else { w = 200 * s; h = 200 * s; }
+            } else {
+                ctx.font = `bold ${120 * s}px "${layer.font}", sans-serif`;
+                const metrics = ctx.measureText(layer.content);
+                w = metrics.width + 20;
+                h = 120 * s + 20;
+            }
+            ctx.translate(layer.x, layer.y);
+            ctx.rotate((layer.rotation * Math.PI) / 180);
+            ctx.strokeRect(-w / 2, -h / 2, w, h);
+            ctx.restore();
+        }
+
+        function getCanvasCoords(e) {
+            const rect = state.canvas.getBoundingClientRect();
+            const scaleX = CANVAS_W / rect.width;
+            const scaleY = CANVAS_H / rect.height;
+            return {
+                x: (e.clientX - rect.left) * scaleX,
+                y: (e.clientY - rect.top) * scaleY
+            };
+        }
+
+        function hitTest(x, y) {
+            const layers = getCurrentLayers();
+            for (let i = layers.length - 1; i >= 0; i--) {
+                const layer = layers[i];
+                if (isPointInLayer(x, y, layer)) return layer;
+            }
+            return null;
+        }
+
+        function isPointInLayer(x, y, layer) {
+            const dx = x - layer.x;
+            const dy = y - layer.y;
+            const angle = -layer.rotation * Math.PI / 180;
+            const rx = dx * Math.cos(angle) - dy * Math.sin(angle);
+            const ry = dx * Math.sin(angle) + dy * Math.cos(angle);
+            const s = layer.scale / 100;
+            let w, h;
+            if (layer.type === 'image') {
+                const img = state.images[layer.src];
+                if (img) { w = img.width * s / 2; h = img.height * s / 2; }
+                else { w = 100 * s; h = 100 * s; }
+            } else {
+                const ctx = state.ctx;
+                ctx.save();
+                ctx.font = `bold ${120 * s}px "${layer.font}", sans-serif`;
+                const metrics = ctx.measureText(layer.content);
+                ctx.restore();
+                w = (metrics.width + 20) / 2;
+                h = (120 * s + 20) / 2;
+            }
+            return Math.abs(rx) <= w && Math.abs(ry) <= h;
+        }
+
+        function onPointerDown(e) {
+            if (!state.product) return;
+            const pos = getCanvasCoords(e);
+            const layer = hitTest(pos.x, pos.y);
+            if (layer) {
+                state.selectedLayerId = layer.id;
+                state.isDragging = true;
+                state.dragStart = pos;
+                state.dragLayerStart = { x: layer.x, y: layer.y };
+                state.canvas.setPointerCapture(e.pointerId);
+                renderLayersPanel();
+                updateControlsPanel();
+                renderCanvas();
+            } else {
+                state.selectedLayerId = null;
+                renderLayersPanel();
+                updateControlsPanel();
+                renderCanvas();
+            }
+        }
+
+        function onPointerMove(e) {
+            if (!state.isDragging || !state.selectedLayerId) return;
+            const pos = getCanvasCoords(e);
+            const layer = getSelectedLayer();
+            if (layer) {
+                layer.x = state.dragLayerStart.x + (pos.x - state.dragStart.x);
+                layer.y = state.dragLayerStart.y + (pos.y - state.dragStart.y);
+                renderCanvas();
+            }
+        }
+
+        function onPointerUp(e) {
+            state.isDragging = false;
+        }
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) { alert('Solo imagenes'); return; }
+            if (file.size > 10 * 1024 * 1024) { alert('Maximo 10MB'); return; }
+            const reader = new FileReader();
+            reader.onload = (e) => addImageLayer(e.target.result);
+            reader.readAsDataURL(file);
+        }
+
+        function handleFontUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const fontName = file.name.replace(/\.[^/.]+$/, '');
+                const style = document.createElement('style');
+                style.textContent = `@font-face { font-family: "${fontName}"; src: url("${e.target.result}"); }`;
+                document.head.appendChild(style);
+                const select = document.getElementById('text-font');
+                const opt = document.createElement('option');
+                opt.value = fontName;
+                opt.textContent = fontName;
+                select.appendChild(opt);
+                const editSelect = document.getElementById('edit-text-font');
+                const editOpt = document.createElement('option');
+                editOpt.value = fontName;
+                editOpt.textContent = fontName;
+                editSelect.appendChild(editOpt);
+                alert('Fuente cargada: ' + fontName);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // ===== AI =====
+        function openAIModal() {
+            document.getElementById('ai-modal').classList.add('active');
+        }
+        function closeAIModal() {
+            document.getElementById('ai-modal').classList.remove('active');
+        }
+        function setPrompt(text) {
+            document.getElementById('ai-prompt').value = text;
+        }
+        async function generateAI() {
+            const prompt = document.getElementById('ai-prompt').value.trim();
+            if (!prompt) return;
+            if (!state.product) { alert('Selecciona una prenda primero'); return; }
+            document.getElementById('ai-btn').classList.add('hidden');
+            document.getElementById('ai-loading').classList.remove('hidden');
+
+            try {
+                const seed = Math.floor(Math.random() * 999999);
+                const encodedPrompt = encodeURIComponent(prompt + ', high quality, detailed, transparent background, png style, professional design');
+                const aiUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&seed=${seed}&nologo=true&negative_prompt=blurry,low quality,text,watermark,signature`;
+
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    addImageLayer(aiUrl);
+                    document.getElementById('ai-btn').classList.remove('hidden');
+                    document.getElementById('ai-loading').classList.add('hidden');
+                    document.getElementById('ai-prompt').value = '';
+                    closeAIModal();
+                };
+                img.onerror = () => {
+                    // Fallback
+                    addImageLayer(aiUrl);
+                    document.getElementById('ai-btn').classList.remove('hidden');
+                    document.getElementById('ai-loading').classList.add('hidden');
+                    closeAIModal();
+                };
+                img.src = aiUrl;
+            } catch(err) {
+                console.error(err);
+                document.getElementById('ai-btn').classList.remove('hidden');
+                document.getElementById('ai-loading').classList.add('hidden');
+            }
+        }
+
+        // ===== PRICING BY ZONE =====
+        function updatePrice() {
+            let base = 0;
+            if (state.product) base = state.product.basePrice;
+
+            // Pricing by content type
+            const allLayers = [...state.layers.front, ...state.layers.back, ...state.layers.left, ...state.layers.right];
+
+            let transfer = 0;
+            let priceLabel = '';
+
+            if (allLayers.length > 0) {
+                // Check if ANY layer is an image (gallery or AI)
+                const hasImage = allLayers.some(l => l.type === 'image');
+                // Check if ANY layer is text
+                const hasText = allLayers.some(l => l.type === 'text');
+
+                if (hasImage) {
+                    // Has image -> full image price
+                    transfer = state.settings?.priceImage !== undefined ? state.settings.priceImage : 8;
+                    priceLabel = 'Personalizacion con imagen';
+                } else if (hasText) {
+                    // Only text -> text price
+                    transfer = state.settings?.priceText !== undefined ? state.settings.priceText : 3;
+                    priceLabel = 'Personalizacion con texto';
+                }
+            }
+
+            let subtotal = base + transfer;
+
+            // Discounts
+            let discountPercent = 0;
+            const discounts = state.settings?.discounts || [];
+            discounts.sort((a,b) => b.qty - a.qty);
+            for (const d of discounts) {
+                if (state.qty >= d.qty) {
+                    discountPercent = d.percent;
+                    break;
+                }
+            }
+
+            let discountAmount = 0;
+            if (discountPercent > 0) {
+                discountAmount = subtotal * (discountPercent / 100);
+            }
+
+            const unitTotal = subtotal - discountAmount;
+            const total = unitTotal * state.qty;
+
+            document.getElementById('price-tag').textContent = total.toFixed(2);
+            document.getElementById('mobile-price').textContent = total.toFixed(2);
+            document.getElementById('base-price').textContent = '$' + (base * state.qty).toFixed(2);
+            document.getElementById('transfer-price').textContent = '$' + (transfer * state.qty).toFixed(2);
+            if (priceLabel) {
+                document.getElementById('transfer-price').textContent += ' (' + priceLabel + ')';
+            }
+
+            const discountRow = document.getElementById('discount-row');
+            const discountBadge = document.getElementById('discount-badge');
+            if (discountPercent > 0) {
+                discountRow.classList.remove('hidden');
+                discountBadge.classList.remove('hidden');
+                document.getElementById('discount-amount').textContent = '-$' + (discountAmount * state.qty).toFixed(2);
+                document.getElementById('discount-percent').textContent = discountPercent;
+            } else {
+                discountRow.classList.add('hidden');
+                discountBadge.classList.add('hidden');
+            }
+
+            document.getElementById('total-price').textContent = '$' + total.toFixed(2);
+            const sizeDisplay = document.getElementById('size-display');
+            const allLayersForDisplay = [...state.layers.front, ...state.layers.back, ...state.layers.left, ...state.layers.right];
+            if (allLayersForDisplay.length === 0) {
+                sizeDisplay.textContent = 'Sin diseno';
+            } else {
+                const zones = [];
+                if (state.layers.front.length) zones.push('Frente');
+                if (state.layers.back.length) zones.push('Espalda');
+                if (state.layers.left.length || state.layers.right.length) zones.push('Mangas');
+                sizeDisplay.textContent = zones.join(' + ');
+            }
+        }
+
+        // ===== ORDER =====
+        function openOrder() {
+            if (!state.product) { alert('Selecciona una prenda primero'); return; }
+            const modal = document.getElementById('order-modal');
+            modal.classList.add('active');
+
+            document.getElementById('order-product-name').textContent = state.product.name;
+            const colorName = state.product.colors.find(c => c.id === state.colorId)?.name || '';
+            document.getElementById('order-details').textContent = colorName + ' · ' + state.qty + ' unidad(es)';
+            document.getElementById('order-total').textContent = '$' + document.getElementById('price-tag').textContent;
+
+            const summary = document.getElementById('order-design-summary');
+            const viewsWithLayers = [];
+            VIEWS.forEach(v => {
+                if (state.layers[v.id].length > 0) {
+                    viewsWithLayers.push(v.name + ': ' + state.layers[v.id].length + ' capas');
+                }
+            });
+            summary.innerHTML = viewsWithLayers.length ? viewsWithLayers.join('<br>') : 'Sin capas';
+        }
+
+        function closeOrderModal() {
+            document.getElementById('order-modal').classList.remove('active');
+        }
+
+        
+        // ===== SUPABASE CONFIG =====
+        function getSupabaseConfig() {
+            const saved = localStorage.getItem('jovafam_supabase');
+            if (saved) {
+                try { return JSON.parse(saved); } catch(e) {}
+            }
+            return { url: '', key: '' };
+        }
+
+        let supabaseClient = null;
+        function initSupabase() {
+            const cfg = getSupabaseConfig();
+            if (cfg.url && cfg.key && window.supabase) {
+                supabaseClient = window.supabase.createClient(cfg.url, cfg.key);
+            }
+        }
+
+        // ===== GENERATE DESIGN IMAGE =====
+        async function generateDesignImage(viewId) {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = CANVAS_W;
+            tempCanvas.height = CANVAS_H;
+            const tCtx = tempCanvas.getContext('2d');
+
+            // Dibujar fondo del producto para esa vista
+            const imgData = state.product.images?.find(i => i.colorId === state.colorId && i.view === viewId);
+            const src = imgData ? imgData.src : state.product.images?.find(i => i.colorId === state.colorId)?.src;
+
+            if (src && state.images[src]) {
+                const img = state.images[src];
+                const productScale = state.product.imageScale || 0.85;
+                const imgScale = imgData?.scale || 1;
+                const maxW = CANVAS_W * productScale * imgScale;
+                const maxH = CANVAS_H * productScale * imgScale;
+                const scale = Math.min(maxW / img.width, maxH / img.height);
+                const w = img.width * scale;
+                const h = img.height * scale;
+                tCtx.drawImage(img, (CANVAS_W - w) / 2, (CANVAS_H - h) / 2, w, h);
+            } else if (src) {
+                tCtx.fillStyle = state.product.colors.find(c => c.id === state.colorId)?.hex || '#1c1c1c';
+                tCtx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+            } else {
+                tCtx.fillStyle = state.product.colors.find(c => c.id === state.colorId)?.hex || '#1c1c1c';
+                tCtx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+            }
+
+            // Dibujar capas
+            const layers = state.layers[viewId];
+            if (layers && layers.length > 0) {
+                layers.forEach(layer => {
+                    tCtx.save();
+                    tCtx.globalAlpha = layer.opacity / 100;
+                    tCtx.translate(layer.x, layer.y);
+                    tCtx.rotate((layer.rotation * Math.PI) / 180);
+                    const s = layer.scale / 100;
+                    if (layer.type === 'image') {
+                        const img = state.images[layer.src];
+                        if (img && img.complete && img.naturalWidth) {
+                            const w = img.width * s;
+                            const h = img.height * s;
+                            tCtx.scale(layer.flipH ? -1 : 1, layer.flipV ? -1 : 1);
+                            tCtx.drawImage(img, -w / 2, -h / 2, w, h);
+                        }
+                    } else if (layer.type === 'text') {
+                        tCtx.scale(layer.flipH ? -1 : 1, layer.flipV ? -1 : 1);
+                        tCtx.font = `bold ${120 * s}px "${layer.font}", sans-serif`;
+                        tCtx.fillStyle = layer.color;
+                        tCtx.textAlign = 'center';
+                        tCtx.textBaseline = 'middle';
+                        tCtx.fillText(layer.content, 0, 0);
+                    }
+                    tCtx.restore();
+                });
+            }
+
+            return new Promise((resolve) => {
+                tempCanvas.toBlob((blob) => resolve(blob), 'image/png');
+            });
+        }
+
+        // ===== SUBMIT ORDER (NEW) =====
+        
+        // ===== VARIABLES TEMPORALES PARA PAGO =====
+        var tempOrderData = null;
+        var tempDesignViews = [];
+        var tempDesignUrl = null;
+
+        // ===== PASO 1: Ir a pago =====
+
+        function blobToDataURL(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        async function processOfflineOrder() {
+            const orderId = 'JFV-' + Date.now().toString(36).toUpperCase().slice(-4) + Math.random().toString(36).slice(2, 5).toUpperCase();
+
+            const viewsWithLayers = VIEWS.filter(v => state.layers[v.id].length > 0);
+            let designDownloaded = false;
+
+            if (viewsWithLayers.length > 0) {
+                try {
+                    const blob = await generateDesignImage(viewsWithLayers[0].id);
+                    if (blob) {
+                        const designDataUrl = await blobToDataURL(blob);
+                        const a = document.createElement('a');
+                        a.href = designDataUrl;
+                        a.download = `diseno-${orderId}.png`;
+                        document.body.appendChild(a);
+                        a.click();
+                        setTimeout(() => a.remove(), 100);
+                        designDownloaded = true;
+                    }
+                } catch (e) {
+                    console.error('Error generando imagen offline:', e);
+                }
+            }
+
+            let msgText = `🛍️ PEDIDO MODO SIMULACIÓN #${orderId}\n\n`;
+            msgText += `👤 CLIENTE\n`;
+            msgText += `Nombre: ${tempOrderData.nombre}\n`;
+            msgText += `Correo: ${tempOrderData.email}\n`;
+            msgText += `Teléfono: ${tempOrderData.telefono}\n\n`;
+            msgText += `📍 DIRECCIÓN\n`;
+            msgText += `País: ${tempOrderData.pais}\n`;
+            msgText += `Ciudad: ${tempOrderData.ciudad}\n`;
+            msgText += `Dirección: ${tempOrderData.direccion}\n`;
+            if (tempOrderData.addressExtra) msgText += `Info adicional: ${tempOrderData.addressExtra}\n`;
+            if (tempOrderData.postalCode) msgText += `Código postal: ${tempOrderData.postalCode}\n`;
+            msgText += `\n👕 PRODUCTO\n`;
+            msgText += `Producto: ${state.product.name}\n`;
+            msgText += `Talla: ${tempOrderData.talla}\n`;
+            msgText += `Color: ${tempOrderData.colorName}\n`;
+            msgText += `Cantidad: ${state.qty}\n`;
+            msgText += `Precio total: $${tempOrderData.totalPrice.toFixed(2)}\n\n`;
+            if (designDownloaded) {
+                msgText += `🎨 La imagen del diseño se descargó automáticamente como "diseno-${orderId}.png". Por favor adjúntala manualmente a este mensaje.\n`;
+            } else {
+                msgText += `🎨 No se pudo generar la imagen del diseño automáticamente.\n`;
+            }
+            if (tempOrderData.notas) msgText += `\n📝 NOTAS: ${tempOrderData.notas}`;
+
+            const encodedMsg = encodeURIComponent(msgText);
+            const whatsappNum = (state.settings?.whatsapp || '').replace(/\D/g, '');
+
+            closeOrderModal();
+
+            if (whatsappNum) {
+                window.open('https://wa.me/' + whatsappNum + '?text=' + encodedMsg, '_blank');
+            } else {
+                alert('Pedido #' + orderId + ' generado en modo simulación.' + (designDownloaded ? ' La imagen del diseño se descargó automáticamente.' : ''));
+            }
+        }
+
+        async function goToPayment(e) {
+            e.preventDefault();
+            const form = e.target;
+
+            // Validar campos obligatorios
+            const requiredFields = [
+                { name: 'nombre', label: 'Nombre completo' },
+                { name: 'email', label: 'Correo electronico' },
+                { name: 'telefono', label: 'Telefono / WhatsApp' },
+                { name: 'pais', label: 'Pais' },
+                { name: 'ciudad', label: 'Ciudad' },
+                { name: 'direccion', label: 'Direccion completa' },
+                { name: 'talla', label: 'Talla' }
+            ];
+
+            for (const field of requiredFields) {
+                const el = form[field.name];
+                if (!el || !el.value.trim()) {
+                    alert('Por favor completa el campo: ' + field.label);
+                    if (el) el.focus();
+                    return;
+                }
+            }
+
+            // Guardar datos temporalmente
+            const colorName = state.product.colors.find(c => c.id === state.colorId)?.name || '';
+            const totalPrice = parseFloat(document.getElementById('price-tag').textContent) || 0;
+
+            tempOrderData = {
+                nombre: form.nombre.value.trim(),
+                email: form.email.value.trim(),
+                telefono: form.telefono.value.trim(),
+                pais: form.pais.value,
+                ciudad: form.ciudad.value,
+                direccion: form.direccion.value.trim(),
+                addressExtra: (form.address_extra?.value || '').trim(),
+                postalCode: (form.postal_code?.value || '').trim(),
+                talla: form.talla.value,
+                notas: form.notas.value.trim(),
+                colorName: colorName,
+                totalPrice: totalPrice
+            };
+
+            // Verificar si pagos estan activados
+            const paymentsEnabled = localStorage.getItem('jovafam_payments_enabled') === 'true';
+
+            if (!paymentsEnabled) {
+                // Modo simulacion: intentar Supabase, fallback a offline
+                let result = null;
+                try {
+                    if (supabaseClient) {
+                        result = await createOrderInSupabase('pending', 'manual', null);
+                    }
+                } catch (err) {
+                    console.log('Supabase error en modo simulacion, usando fallback offline:', err.message);
+                }
+                if (result) {
+                    await finalizeOrder(result.orderId, result.token);
+                } else {
+                    await processOfflineOrder();
+                }
+                return;
+            }
+
+            // Mostrar resumen en paso 2
+            document.getElementById('payment-product-name').textContent = state.product.name;
+            document.getElementById('payment-qty').textContent = state.qty;
+            document.getElementById('payment-total').textContent = '$' + totalPrice.toFixed(2);
+
+            // Cambiar a paso de pago
+            document.getElementById('step-shipping').classList.add('hidden');
+            document.getElementById('step-payment').classList.remove('hidden');
+
+            // Renderizar boton de PayPal
+            renderPayPalButton(totalPrice);
+        }
+
+        function backToShipping() {
+            document.getElementById('step-payment').classList.add('hidden');
+            document.getElementById('step-shipping').classList.remove('hidden');
+        }
+
+        // ===== PAYPAL =====
+        function renderPayPalButton(amount) {
+            const container = document.getElementById('paypal-button-container');
+            const errorEl = document.getElementById('paypal-error');
+            container.innerHTML = '';
+
+            // Obtener Client ID de la configuracion
+            const paypalClientId = (state.settings?.paypalClientId || '').trim();
+            if (!paypalClientId || paypalClientId === 'test') {
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            errorEl.classList.add('hidden');
+
+            // Cargar script de PayPal si no esta cargado o si cambio el Client ID
+            const existingScript = document.getElementById('paypal-script');
+            if (existingScript) {
+                existingScript.remove();
+            }
+
+            const script = document.createElement('script');
+            script.id = 'paypal-script';
+            script.src = 'https://www.paypal.com/sdk/js?client-id=' + paypalClientId + '&currency=USD&intent=capture';
+            script.onload = function() {
+                if (!window.paypal) {
+                    errorEl.textContent = 'Error cargando PayPal. Intenta recargar la pagina.';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+                window.paypal.Buttons({
+                    style: {
+                        layout: 'vertical',
+                        color: 'gold',
+                        shape: 'rect',
+                        label: 'pay'
+                    },
+                    createOrder: function(data, actions) {
+                        return actions.order.create({
+                            purchase_units: [{
+                                amount: {
+                                    value: amount.toFixed(2),
+                                    currency_code: 'USD'
+                                },
+                                description: 'Pedido JOVAFAM - ' + state.product.name
+                            }]
+                        });
+                    },
+                    onApprove: function(data, actions) {
+                        return actions.order.capture().then(function(details) {
+                            proceedWithOrder('paypal', details.id);
+                        });
+                    },
+                    onError: function(err) {
+                        console.error('PayPal error:', err);
+                        alert('Hubo un error con PayPal. Intenta con otro metodo de pago.');
+                    }
+                }).render('#paypal-button-container');
+            };
+            script.onerror = function() {
+                errorEl.textContent = 'No se pudo cargar PayPal. Verifica tu conexion.';
+                errorEl.classList.remove('hidden');
+            };
+            document.head.appendChild(script);
+        }
+
+        // ===== STRIPE =====
+        async function payWithStripe() {
+            const btn = document.getElementById('stripe-pay-btn');
+            const errorEl = document.getElementById('stripe-error');
+
+            // Verificar configuracion
+            const stripeKey = (state.settings?.stripePublishableKey || '').trim();
+            if (!stripeKey) {
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            errorEl.classList.add('hidden');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="flex items-center justify-center gap-2"><svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Procesando...</span>';
+
+            try {
+                // Para Stripe sin backend propio, usamos un flujo de "pago simulado" 
+                // o redireccion a Stripe Checkout via Supabase Edge Function.
+                // Por ahora, mostramos un modal de tarjeta con Stripe Elements
+                // que procesa el pago directamente.
+
+                if (!window.Stripe) {
+                    await loadStripeScript();
+                }
+
+                const stripe = window.Stripe(stripeKey);
+
+                // Crear pedido primero en estado pending para tener el token
+                const result = await createOrderInSupabase('pending', 'stripe', null);
+                if (!result) {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Pagar con tarjeta de credito';
+                    return;
+                }
+
+                // Redirigir a Stripe Checkout usando una sesion
+                // Como no tenemos backend, usamos un approach simple:
+                // Crear un PaymentIntent y usar Stripe Elements
+                // Pero eso requiere backend... 
+                // SOLUCION TEMPORAL: Simular pago exitoso para demostracion
+                // En produccion, el usuario debe configurar una Edge Function en Supabase.
+
+                // Para hacerlo REAL sin backend, usamos Stripe Payment Links
+                // o redirigimos a una pagina de pago externa.
+
+                // FLUJO REAL CON EDGE FUNCTION (si esta configurada):
+                const edgeUrl = state.settings?.stripeEdgeUrl?.trim();
+                if (edgeUrl) {
+                    const response = await fetch(edgeUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (getSupabaseConfig().key || '') },
+                        body: JSON.stringify({
+                            amount: tempOrderData.totalPrice,
+                            order_token: result.token,
+                            product_name: state.product.name
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.url) {
+                        window.location.href = data.url;
+                        return;
+                    }
+                }
+
+                // FLUJO DEMO: Si no hay Edge Function, simular pago
+                // Esto es solo para pruebas. En produccion debe usarse la Edge Function.
+                const confirmed = confirm('DEMO: Esto simularia un pago con Stripe. En produccion, esto redirigiria a Stripe Checkout.\n\n¿Confirmar pago de $' + tempOrderData.totalPrice.toFixed(2) + '?');
+                if (confirmed) {
+                    await updateOrderPayment(result.token, 'paid', 'stripe', 'demo_' + Date.now());
+                    await finalizeOrder(result.orderId, result.token);
+                }
+
+                btn.disabled = false;
+                btn.innerHTML = 'Pagar con tarjeta de credito';
+
+            } catch (err) {
+                console.error(err);
+                alert('Error: ' + err.message);
+                btn.disabled = false;
+                btn.innerHTML = 'Pagar con tarjeta de credito';
+            }
+        }
+
+        function loadStripeScript() {
+            return new Promise(function(resolve, reject) {
+                if (window.Stripe) { resolve(); return; }
+                var script = document.createElement('script');
+                script.src = 'https://js.stripe.com/v3/';
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+
+        // ===== CREAR PEDIDO EN SUPABASE =====
+        async function createOrderInSupabase(paymentStatus, paymentMethod, transactionId) {
+            if (!supabaseClient) {
+                alert('Supabase no esta configurado.');
+                return null;
+            }
+
+            // Generar y subir disenos
+            const viewsWithLayers = VIEWS.filter(v => state.layers[v.id].length > 0);
+            if (viewsWithLayers.length === 0) {
+                throw new Error('No hay diseno personalizado. Agrega al menos una imagen o texto.');
+            }
+
+            const token = crypto.randomUUID ? crypto.randomUUID() : 'token-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            let designUrl = null;
+            const designViews = [];
+
+            for (const v of viewsWithLayers) {
+                const blob = await generateDesignImage(v.id);
+                if (!blob) continue;
+                const fileName = 'design-' + token + '-' + v.id + '.png';
+                const { data: uploadData, error: uploadError } = await supabaseClient.storage
+                    .from('designs')
+                    .upload(fileName, blob, { contentType: 'image/png', upsert: false });
+                if (uploadError) { console.error('Upload error:', uploadError); continue; }
+                const { data: urlData } = supabaseClient.storage.from('designs').getPublicUrl(fileName);
+                const url = urlData.publicUrl;
+                designViews.push({ view: v.name, url: url });
+                if (!designUrl) designUrl = url;
+            }
+
+            if (!designUrl) {
+                alert('No se pudo guardar la imagen del diseno.');
+                return null;
+            }
+
+            tempDesignUrl = designUrl;
+            tempDesignViews = designViews;
+
+            const { data: orderData, error: orderError } = await supabaseClient.rpc('create_order', {
+                p_customer_name: tempOrderData.nombre,
+                p_customer_email: tempOrderData.email,
+                p_customer_phone: tempOrderData.telefono,
+                p_country: tempOrderData.pais,
+                p_city: tempOrderData.ciudad,
+                p_address: tempOrderData.direccion,
+                p_address_extra: tempOrderData.addressExtra,
+                p_postal_code: tempOrderData.postalCode,
+                p_product_name: state.product.name,
+                p_product_size: tempOrderData.talla,
+                p_product_color: tempOrderData.colorName,
+                p_quantity: state.qty,
+                p_total_price: tempOrderData.totalPrice,
+                p_design_url: designUrl,
+                p_design_views: designViews,
+                p_payment_status: paymentStatus,
+                p_payment_method: paymentMethod,
+                p_payment_transaction_id: transactionId
+            });
+
+            if (orderError || !orderData || orderData.length === 0) {
+                alert('Error al guardar el pedido: ' + (orderError?.message || 'Desconocido'));
+                return null;
+            }
+
+            return { orderId: orderData[0].order_id, token: orderData[0].token };
+        }
+
+        async function updateOrderPayment(token, status, method, transactionId) {
+            if (!supabaseClient) return;
+            try {
+                await supabaseClient.rpc('update_payment_status', {
+                    p_token: token,
+                    p_status: status,
+                    p_method: method,
+                    p_transaction_id: transactionId
+                });
+            } catch(e) { console.error(e); }
+        }
+
+        // ===== FINALIZAR PEDIDO (WhatsApp) =====
+        async function finalizeOrder(orderId, orderToken) {
+            const currentUrl = window.location.href;
+            const basePath = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+            const orderLink = basePath + 'order.html?token=' + orderToken;
+
+            var msgText = ' NUEVO PEDIDO #' + orderId + '\n\n';
+            msgText += ' CLIENTE\n';
+            msgText += 'Nombre: ' + tempOrderData.nombre + '\n';
+            msgText += 'Correo: ' + tempOrderData.email + '\n';
+            msgText += 'Telefono: ' + tempOrderData.telefono + '\n\n';
+            msgText += ' DIRECCION\n';
+            msgText += 'Pais: ' + tempOrderData.pais + '\n';
+            msgText += 'Ciudad: ' + tempOrderData.ciudad + '\n';
+            msgText += 'Direccion: ' + tempOrderData.direccion + '\n';
+            if (tempOrderData.addressExtra) msgText += 'Info adicional: ' + tempOrderData.addressExtra + '\n';
+            if (tempOrderData.postalCode) msgText += 'Codigo postal: ' + tempOrderData.postalCode + '\n';
+            msgText += '\n\uD83D\uDC55 PRODUCTO\n';
+            msgText += 'Producto: ' + state.product.name + '\n';
+            msgText += 'Talla: ' + tempOrderData.talla + '\n';
+            msgText += 'Color: ' + tempOrderData.colorName + '\n';
+            msgText += 'Cantidad: ' + state.qty + '\n';
+            msgText += 'Precio total: $' + tempOrderData.totalPrice.toFixed(2) + '\n\n';
+            msgText += '🎨 DISENO DEL PEDIDO\n';
+            msgText += orderLink + '\n';
+            if (tempOrderData.notas) msgText += '\n\uD83D\uDCDD NOTAS: ' + tempOrderData.notas;
+
+            const encodedMsg = encodeURIComponent(msgText);
+            const whatsappNum = (state.settings?.whatsapp || '').replace(/\D/g, '');
+
+            closeOrderModal();
+
+            if (whatsappNum) {
+                window.open('https://wa.me/' + whatsappNum + '?text=' + encodedMsg, '_blank');
+            } else {
+                alert('Pedido #' + orderId + ' guardado exitosamente. Enlace: ' + orderLink);
+            }
+        }
+
+        // ===== PROCESAR PAGO EXITOSO =====
+        async function proceedWithOrder(paymentMethod, transactionId) {
+            try {
+                const result = await createOrderInSupabase('paid', paymentMethod, transactionId);
+                if (result) {
+                    await finalizeOrder(result.orderId, result.token);
+                }
+            } catch (err) {
+                alert('Error al guardar el pedido: ' + err.message);
+            }
+        }
+
+async function submitOrder(e) {
+            e.preventDefault();
+            const form = e.target;
+
+            // Validar Supabase configurado
+            if (!supabaseClient) {
+                alert('El sistema de pedidos no esta configurado. Contacta al administrador.');
+                return;
+            }
+
+            // Validar campos obligatorios
+            const requiredFields = [
+                { name: 'nombre', label: 'Nombre completo' },
+                { name: 'email', label: 'Correo electronico' },
+                { name: 'telefono', label: 'Telefono / WhatsApp' },
+                { name: 'pais', label: 'Pais' },
+                { name: 'ciudad', label: 'Ciudad' },
+                { name: 'direccion', label: 'Direccion completa' },
+                { name: 'talla', label: 'Talla' }
+            ];
+
+            for (const field of requiredFields) {
+                const el = form[field.name];
+                if (!el || !el.value.trim()) {
+                    alert(`Por favor completa el campo: ${field.label}`);
+                    if (el) el.focus();
+                    return;
+                }
+            }
+
+            const nombre = form.nombre.value.trim();
+            const email = form.email.value.trim();
+            const telefono = form.telefono.value.trim();
+            const pais = form.pais.value;
+            const ciudad = form.ciudad.value;
+            const direccion = form.direccion.value.trim();
+            const addressExtra = (form.address_extra?.value || '').trim();
+            const postalCode = (form.postal_code?.value || '').trim();
+            const talla = form.talla.value;
+            const notas = form.notas.value.trim();
+
+            // Boton loading
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="flex items-center justify-center gap-2"><svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Guardando pedido...</span>';
+
+            try {
+                // Generar token unico
+                const token = crypto.randomUUID ? crypto.randomUUID() : 'token-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+
+                // Generar y subir disenos (solo vistas con capas)
+                const viewsWithLayers = VIEWS.filter(v => state.layers[v.id].length > 0);
+                if (viewsWithLayers.length === 0) {
+                    throw new Error('No hay diseno personalizado. Agrega al menos una imagen o texto.');
+                }
+
+                let designUrl = null;
+                const designViews = [];
+
+                // Generar y subir cada vista que tenga capas
+                for (const v of viewsWithLayers) {
+                    const blob = await generateDesignImage(v.id);
+                    if (!blob) continue;
+
+                    const fileName = `design-${token}-${v.id}.png`;
+                    const { data: uploadData, error: uploadError } = await supabaseClient.storage
+                        .from('designs')
+                        .upload(fileName, blob, { contentType: 'image/png', upsert: false });
+
+                    if (uploadError) {
+                        console.error('Error subiendo imagen:', uploadError);
+                        continue;
+                    }
+
+                    const { data: urlData } = supabaseClient.storage
+                        .from('designs')
+                        .getPublicUrl(fileName);
+
+                    const url = urlData.publicUrl;
+                    designViews.push({ view: v.name, url: url });
+                    if (!designUrl) designUrl = url;
+                }
+
+                // designUrl = primera imagen subida (preferiblemente frente)
+                if (!designUrl) {
+                    throw new Error('No se pudo guardar la imagen del diseno. Intenta nuevamente.');
+                }
+                console.log('Vistas guardadas:', designViews.length, designViews);
+
+                // Guardar pedido en Supabase
+                const colorName = state.product.colors.find(c => c.id === state.colorId)?.name || '';
+                const totalPrice = parseFloat(document.getElementById('price-tag').textContent) || 0;
+
+                const { data: orderData, error: orderError } = await supabaseClient.rpc('create_order', {
+                    p_customer_name: nombre,
+                    p_customer_email: email,
+                    p_customer_phone: telefono,
+                    p_country: pais,
+                    p_city: ciudad,
+                    p_address: direccion,
+                    p_address_extra: addressExtra,
+                    p_postal_code: postalCode,
+                    p_product_name: state.product.name,
+                    p_product_size: talla,
+                    p_product_color: colorName,
+                    p_quantity: state.qty,
+                    p_total_price: totalPrice,
+                    p_design_url: designUrl,
+                    p_design_views: designViews
+                });
+
+                if (orderError || !orderData || orderData.length === 0) {
+                    throw new Error(orderError?.message || 'Error al guardar el pedido en el servidor');
+                }
+
+                const order = orderData[0];
+                const orderId = order.order_id;
+                const orderToken = order.token;
+
+                // Construir enlace al pedido
+                // Generar URL absoluta completa (funciona desde WhatsApp en cualquier dispositivo)
+                const currentUrl = window.location.href;
+                const basePath = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+                const orderLink = basePath + 'order.html?token=' + orderToken;
+
+                // Construir mensaje de WhatsApp (usando encodeURIComponent para todo el texto)
+                let msgText = `🛍️ NUEVO PEDIDO #${orderId}
+
+`;
+                msgText += `👤 CLIENTE
+`;
+                msgText += `Nombre: ${nombre}
+`;
+                msgText += `Correo: ${email}
+`;
+                msgText += `Telefono: ${telefono}
+
+`;
+                msgText += `📍 DIRECCION
+`;
+                msgText += `Pais: ${pais}
+`;
+                msgText += `Ciudad: ${ciudad}
+`;
+                msgText += `Direccion: ${direccion}
+`;
+                if (addressExtra) msgText += `Info adicional: ${addressExtra}
+`;
+                if (postalCode) msgText += `Codigo postal: ${postalCode}
+`;
+                msgText += `
+👕 PRODUCTO
+`;
+                msgText += `Producto: ${state.product.name}
+`;
+                msgText += `Talla: ${talla}
+`;
+                msgText += `Color: ${colorName}
+`;
+                msgText += `Cantidad: ${state.qty}
+`;
+                msgText += `Precio total: $${totalPrice.toFixed(2)}
+
+`;
+                msgText += `🎨 DISENO DEL PEDIDO
+`;
+                msgText += `${orderLink}
+`;
+                if (notas) msgText += `
+📝 NOTAS: ${notas}`;
+
+                const encodedMsg = encodeURIComponent(msgText);
+
+                const whatsappNum = (state.settings?.whatsapp || '').replace(/\D/g, '');
+                if (!whatsappNum) {
+                    alert('Numero de WhatsApp no configurado en el admin. El pedido se guardo correctamente con ID ' + orderId + '. Enlace: ' + orderLink);
+                    closeOrderModal();
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                    return;
+                }
+
+                // Cerrar modal y abrir WhatsApp
+                closeOrderModal();
+                window.open(`https://wa.me/${whatsappNum}?text=${encodedMsg}`, '_blank');
+
+            } catch (err) {
+                console.error(err);
+                alert('Hubo un error al guardar el pedido. Por favor intenta nuevamente.\n\nError: ' + err.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        }
+
+    </script>
+</body>
+</html>

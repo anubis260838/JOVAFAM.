@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JOVAFAM | Pedido</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'display': ['Playfair Display', 'serif'],
+                        'sans': ['Inter', 'sans-serif'],
+                        'mono': ['Space Grotesk', 'monospace'],
+                    },
+                    colors: {
+                        'luxury': {
+                            900: '#0a0a0a', 800: '#141414', 700: '#1c1c1c',
+                            600: '#2a2a2a', 500: '#3a3a3a',
+                            gold: '#c9a96e', 'gold-light': '#e8d5a3', cream: '#f5f0e8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: #0a0a0a; color: #f5f0e8; font-family: 'Inter', sans-serif; }
+        .gold-shimmer {
+            background: linear-gradient(90deg, #c9a96e 0%, #e8d5a3 25%, #c9a96e 50%, #e8d5a3 75%, #c9a96e 100%);
+            background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; animation: shimmer 3s linear infinite;
+        }
+        @keyframes shimmer { to { background-position: 200% center; } }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c9a96e; }
+    </style>
+<base target="_blank">
+</head>
+<body class="bg-luxury-900 text-luxury-cream min-h-screen">
+
+    <header class="bg-luxury-900/90 backdrop-blur-xl border-b border-luxury-700/30 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <a href="index.html" class="flex items-center gap-3">
+                    <div class="w-8 h-8 border border-luxury-gold/50 rounded-full flex items-center justify-center">
+                        <span class="font-display text-luxury-gold text-sm">J</span>
+                    </div>
+                    <span class="font-display text-xl text-luxury-cream">JOVAFAM</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-4 lg:px-8 py-12">
+        <div id="loading" class="text-center py-20">
+            <div class="w-12 h-12 border-2 border-luxury-gold/20 border-t-luxury-gold rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-luxury-500 font-mono text-sm">Cargando pedido...</p>
+        </div>
+
+        <div id="error-notfound" class="hidden text-center py-20">
+            <div class="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h2 class="font-display text-2xl text-luxury-cream mb-2">Pedido no encontrado</h2>
+            <p class="text-luxury-500">El enlace puede haber expirado o ser incorrecto.</p>
+        </div>
+
+        <div id="error-config" class="hidden text-center py-12">
+            <div class="w-16 h-16 rounded-full bg-luxury-gold/10 flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-luxury-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <h2 class="font-display text-2xl text-luxury-cream mb-2">Configuracion necesaria</h2>
+            <p class="text-luxury-500 mb-6 max-w-md mx-auto">Este dispositivo no tiene la conexion a Supabase configurada. Pega aqui los datos de tu proyecto para ver el pedido.</p>
+            <div class="max-w-sm mx-auto space-y-3 text-left">
+                <div>
+                    <label class="block font-mono text-[10px] uppercase tracking-wider text-luxury-500 mb-1">Supabase URL</label>
+                    <input type="text" id="cfg-url" placeholder="https://tu-proyecto.supabase.co" class="w-full bg-luxury-800 border border-luxury-700 rounded-lg px-3 py-2 text-luxury-cream text-sm focus:border-luxury-gold focus:outline-none">
+                </div>
+                <div>
+                    <label class="block font-mono text-[10px] uppercase tracking-wider text-luxury-500 mb-1">Supabase Anon Key</label>
+                    <input type="password" id="cfg-key" placeholder="eyJhbGciOiJIUzI1NiIs..." class="w-full bg-luxury-800 border border-luxury-700 rounded-lg px-3 py-2 text-luxury-cream text-sm focus:border-luxury-gold focus:outline-none">
+                </div>
+                <button onclick="saveAndRetry()" class="w-full py-2.5 bg-luxury-gold text-luxury-900 rounded-lg font-mono text-xs uppercase tracking-wider font-semibold hover:bg-luxury-gold-light transition-colors">
+                    Guardar y Ver Pedido
+                </button>
+                <p class="text-[10px] text-luxury-600 text-center">Los encuentras en Supabase > Project Settings > API</p>
+            </div>
+        </div>
+
+        <div id="order-content" class="hidden space-y-8">
+            <div class="text-center">
+                <span class="font-mono text-xs uppercase tracking-[0.3em] text-luxury-gold mb-2 block">Pedido Confirmado</span>
+                <h1 class="font-display text-4xl md:text-5xl text-luxury-cream mb-2">Pedido <span id="order-id" class="gold-shimmer"></span></h1>
+                <p class="text-luxury-500 text-sm" id="order-date"></p>
+                <div id="payment-badge" class="mt-3"></div>
+            </div>
+
+            <div class="bg-luxury-800/50 border border-luxury-700/50 rounded-2xl p-6 md:p-8">
+                <h2 class="font-mono text-xs uppercase tracking-widest text-luxury-gold mb-6">Datos del Cliente</h2>
+                <div class="grid md:grid-cols-2 gap-4 text-sm">
+                    <div><span class="text-luxury-500 block text-xs mb-1">Nombre</span><span id="customer-name" class="text-luxury-cream"></span></div>
+                    <div><span class="text-luxury-500 block text-xs mb-1">Correo</span><span id="customer-email" class="text-luxury-cream"></span></div>
+                    <div><span class="text-luxury-500 block text-xs mb-1">Telefono</span><span id="customer-phone" class="text-luxury-cream"></span></div>
+                    <div><span class="text-luxury-500 block text-xs mb-1">Pais</span><span id="customer-country" class="text-luxury-cream"></span></div>
+                    <div><span class="text-luxury-500 block text-xs mb-1">Ciudad</span><span id="customer-city" class="text-luxury-cream"></span></div>
+                    <div class="md:col-span-2"><span class="text-luxury-500 block text-xs mb-1">Direccion completa</span><span id="customer-address" class="text-luxury-cream"></span></div>
+                    <div><span class="text-luxury-500 block text-xs mb-1">Apartamento / Casa / Interior / Info adicional</span><span id="customer-address-extra" class="text-luxury-cream"></span></div>
+                    <div><span class="text-luxury-500 block text-xs mb-1">Codigo postal</span><span id="customer-postal" class="text-luxury-cream"></span></div>
+                </div>
+            </div>
+
+            <div class="bg-luxury-800/50 border border-luxury-700/50 rounded-2xl p-6 md:p-8">
+                <h2 class="font-mono text-xs uppercase tracking-widest text-luxury-gold mb-6">Estado de Pago</h2>
+                <div id="payment-info" class="mb-4"></div>
+            </div>
+
+            <div class="bg-luxury-800/50 border border-luxury-700/50 rounded-2xl p-6 md:p-8">
+                <h2 class="font-mono text-xs uppercase tracking-widest text-luxury-gold mb-6">Producto</h2>
+                <div class="grid md:grid-cols-2 gap-4 text-sm">
+                    <div><span class="text-luxury-500 block text-xs mb-1">Producto</span><span id="product-name" class="text-luxury-cream"></span></div>
+                    <div><span class="text-luxury-500 block text-xs mb-1">Talla</span><span id="product-size" class="text-luxury-cream"></span></div>
+                    <div><span class="text-luxury-500 block text-xs mb-1">Color</span><span id="product-color" class="text-luxury-cream"></span></div>
+                    <div><span class="text-luxury-500 block text-xs mb-1">Cantidad</span><span id="product-qty" class="text-luxury-cream"></span></div>
+                    <div><span class="text-luxury-500 block text-xs mb-1">Precio total</span><span id="product-price" class="text-luxury-gold font-mono text-lg"></span></div>
+                </div>
+            </div>
+
+            <div class="bg-luxury-800/50 border border-luxury-700/50 rounded-2xl p-6 md:p-8">
+                <h2 class="font-mono text-xs uppercase tracking-widest text-luxury-gold mb-6">Diseno Personalizado</h2>
+                <div id="design-images" class="space-y-4"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // ============================================================
+        // CONFIGURACION - EDITA ESTAS 2 LINEAS CON TUS DATOS REALES
+        // Encuentralos en: Supabase > Project Settings > API
+        // ============================================================
+        var HARDCODED_URL = '';
+        var HARDCODED_KEY = '';
+        // ============================================================
+
+        function getSupabaseConfig() {
+            if (HARDCODED_URL && HARDCODED_KEY) {
+                return { url: HARDCODED_URL, key: HARDCODED_KEY };
+            }
+            try {
+                var saved = localStorage.getItem('jovafam_supabase');
+                if (saved) {
+                    var cfg = JSON.parse(saved);
+                    if (cfg.url && cfg.key) return cfg;
+                }
+            } catch(e) {}
+            return null;
+        }
+
+        function saveConfig(url, key) {
+            try { localStorage.setItem('jovafam_supabase', JSON.stringify({ url: url, key: key })); } catch(e) {}
+        }
+
+        function saveAndRetry() {
+            var url = document.getElementById('cfg-url').value.trim();
+            var key = document.getElementById('cfg-key').value.trim();
+            if (!url || !key) { alert('Completa ambos campos'); return; }
+            saveConfig(url, key);
+            location.reload();
+        }
+
+        var sbClient = null;
+
+        function initSupabase() {
+            var cfg = getSupabaseConfig();
+            if (!cfg) return false;
+            if (!window.supabase || !window.supabase.createClient) return false;
+            try {
+                sbClient = window.supabase.createClient(cfg.url, cfg.key);
+                return true;
+            } catch(e) {
+                console.error('Error creando cliente:', e);
+                return false;
+            }
+        }
+
+        async function loadOrder() {
+            var timeoutId = setTimeout(function() {
+                showScreen('error-notfound');
+            }, 15000);
+
+            var hasSupabase = initSupabase();
+            if (!hasSupabase) {
+                clearTimeout(timeoutId);
+                showScreen('error-config');
+                return;
+            }
+
+            var params = new URLSearchParams(window.location.search);
+            var token = params.get('token');
+
+            if (!token) {
+                clearTimeout(timeoutId);
+                showScreen('error-notfound');
+                return;
+            }
+
+            try {
+                var result = await sbClient.rpc('get_order_by_token', { p_token: token });
+                clearTimeout(timeoutId);
+
+                if (result.error) {
+                    console.error('RPC error:', result.error);
+                    showScreen('error-notfound');
+                    return;
+                }
+                if (!result.data || result.data.length === 0) {
+                    showScreen('error-notfound');
+                    return;
+                }
+
+                displayOrder(result.data[0]);
+            } catch (err) {
+                clearTimeout(timeoutId);
+                console.error('Exception:', err);
+                showScreen('error-notfound');
+            }
+        }
+
+        function showScreen(screenId) {
+            var ids = ['loading', 'error-notfound', 'error-config', 'order-content'];
+            for (var i = 0; i < ids.length; i++) {
+                var el = document.getElementById(ids[i]);
+                if (el) {
+                    if (ids[i] === screenId) el.classList.remove('hidden');
+                    else el.classList.add('hidden');
+                }
+            }
+        }
+
+        function displayOrder(order) {
+            showScreen('order-content');
+
+            document.getElementById('order-id').textContent = '#' + (order.order_id || '???');
+            document.getElementById('order-date').textContent = order.created_at
+                ? new Date(order.created_at).toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' })
+                : '';
+
+            document.getElementById('customer-name').textContent = order.customer_name || '-';
+            document.getElementById('customer-email').textContent = order.customer_email || '-';
+            document.getElementById('customer-phone').textContent = order.customer_phone || '-';
+            document.getElementById('customer-country').textContent = order.country || '-';
+            document.getElementById('customer-city').textContent = order.city || '-';
+            document.getElementById('customer-address').textContent = order.address || '-';
+            document.getElementById('customer-address-extra').textContent = order.address_extra || 'No especificado';
+            document.getElementById('customer-postal').textContent = order.postal_code || 'No especificado';
+
+            document.getElementById('product-name').textContent = order.product_name || '-';
+            document.getElementById('product-size').textContent = order.product_size || 'No especificado';
+            document.getElementById('product-color').textContent = order.product_color || '-';
+            document.getElementById('product-qty').textContent = order.quantity || '-';
+            document.getElementById('product-price').textContent = '$' + (parseFloat(order.total_price) || 0).toFixed(2);
+
+            var designContainer = document.getElementById('design-images');
+            designContainer.innerHTML = '';
+
+            var views = order.design_views;
+            if (typeof views === 'string') {
+                try { views = JSON.parse(views); } catch(e) { views = []; }
+            }
+            if (!Array.isArray(views)) views = [];
+
+            if (views.length > 0) {
+                for (var i = 0; i < views.length; i++) {
+                    var view = views[i];
+                    var label = view.view || (i === 0 ? 'Diseno Principal' : 'Vista ' + (i + 1));
+                    var div = document.createElement('div');
+                    div.className = 'rounded-xl overflow-hidden border border-luxury-700/50 bg-luxury-900' + (i > 0 ? ' mt-4' : '');
+                    div.innerHTML = '<div class="px-4 py-2 bg-luxury-800/50 border-b border-luxury-700/30"><span class="font-mono text-xs text-luxury-gold uppercase">' + label + '</span></div><img src="' + view.url + '" alt="' + label + '" class="w-full h-auto max-h-[600px] object-contain" onerror="this.style.display=\'none\'">';
+                    designContainer.appendChild(div);
+                }
+            } else if (order.design_url) {
+                var div = document.createElement('div');
+                div.className = 'rounded-xl overflow-hidden border border-luxury-700/50 bg-luxury-900';
+                div.innerHTML = '<img src="' + order.design_url + '" alt="Diseno del pedido" class="w-full h-auto max-h-[600px] object-contain" onerror="this.style.display=\'none\'">';
+                designContainer.appendChild(div);
+            } else {
+                designContainer.innerHTML = '<p class="text-luxury-500 text-sm">No hay imagen del diseno disponible.</p>';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadOrder);
+    </script>
+</body>
+</html>
