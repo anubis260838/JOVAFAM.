@@ -153,7 +153,242 @@
 
         /* Glow */
         .glow-gold { box-shadow: 0 0 30px rgba(201, 169, 110, 0.25); }
-    </style>
+    
+
+/* =========================================================
+   JOVAFAM — LIGHT LUXURY THEME
+   Adaptación clara, elegante y premium
+   ========================================================= */
+:root {
+    --jf-bg: #f7f5f0;
+    --jf-bg-top: #fbfaf7;
+    --jf-surface: #ffffff;
+    --jf-surface-soft: #f2eee7;
+    --jf-surface-muted: #ebe5db;
+    --jf-text: #1f2933;
+    --jf-text-soft: #667085;
+    --jf-text-muted: #98a2b3;
+    --jf-border: #ded7cb;
+    --jf-border-soft: #ebe6de;
+    --jf-gold: #b58a45;
+    --jf-gold-hover: #a97e3d;
+    --jf-gold-light: #d7bc84;
+    --jf-gold-soft: rgba(181, 138, 69, 0.10);
+    --jf-shadow: 0 12px 34px rgba(45, 38, 28, 0.08);
+    --jf-shadow-soft: 0 6px 18px rgba(45, 38, 28, 0.06);
+}
+html { color-scheme: light; }
+body {
+    background:
+        radial-gradient(circle at top left, rgba(215,188,132,.12), transparent 34%),
+        linear-gradient(180deg, var(--jf-bg-top) 0%, var(--jf-bg) 100%) !important;
+    color: var(--jf-text) !important;
+}
+
+/* Mapeo visual de las utilidades Tailwind existentes */
+.bg-luxury-900 { background-color: var(--jf-surface) !important; }
+.bg-luxury-900\/50 { background-color: rgba(255,255,255,.82) !important; }
+.bg-luxury-900\/80 { background-color: rgba(255,255,255,.92) !important; }
+.bg-luxury-900\/85 { background-color: rgba(255,255,255,.94) !important; }
+.bg-luxury-900\/90 { background-color: rgba(255,255,255,.95) !important; }
+.bg-luxury-900\/95 { background-color: rgba(255,255,255,.97) !important; }
+
+.bg-luxury-800 { background-color: var(--jf-surface) !important; }
+.bg-luxury-800\/20 { background-color: rgba(242,238,231,.50) !important; }
+.bg-luxury-800\/30 { background-color: rgba(242,238,231,.66) !important; }
+.bg-luxury-800\/50 { background-color: rgba(255,255,255,.88) !important; }
+
+.bg-luxury-700 { background-color: var(--jf-surface-muted) !important; }
+.bg-luxury-gold { background-color: var(--jf-gold) !important; }
+.bg-luxury-gold\/5 { background-color: rgba(181,138,69,.05) !important; }
+.bg-luxury-gold\/10 { background-color: rgba(181,138,69,.10) !important; }
+.bg-luxury-gold\/20 { background-color: rgba(181,138,69,.16) !important; }
+.bg-luxury-cream { background-color: var(--jf-gold) !important; }
+
+.text-luxury-cream,
+.text-luxury-900 { color: var(--jf-text) !important; }
+.text-luxury-400 { color: #475467 !important; }
+.text-luxury-500 { color: var(--jf-text-soft) !important; }
+.text-luxury-600 { color: var(--jf-text-muted) !important; }
+.text-luxury-gold { color: var(--jf-gold) !important; }
+.text-luxury-700\/50 { color: #d2c9bc !important; }
+
+.border-luxury-300 { border-color: #d8d1c6 !important; }
+.border-luxury-600 { border-color: #d4ccbf !important; }
+.border-luxury-600\/30 { border-color: rgba(212,204,191,.55) !important; }
+.border-luxury-700 { border-color: var(--jf-border) !important; }
+.border-luxury-700\/30 { border-color: rgba(222,215,203,.48) !important; }
+.border-luxury-700\/50 { border-color: rgba(222,215,203,.74) !important; }
+.border-luxury-gold { border-color: var(--jf-gold) !important; }
+.border-luxury-gold\/20 { border-color: rgba(181,138,69,.22) !important; }
+.border-luxury-gold\/30 { border-color: rgba(181,138,69,.32) !important; }
+.border-luxury-gold\/40 { border-color: rgba(181,138,69,.42) !important; }
+.border-luxury-gold\/50 { border-color: rgba(181,138,69,.54) !important; }
+
+.hover\:bg-luxury-gold:hover { background-color: var(--jf-gold-hover) !important; }
+.hover\:bg-luxury-gold-light:hover { background-color: var(--jf-gold-light) !important; }
+.hover\:bg-luxury-gold\/10:hover { background-color: rgba(181,138,69,.10) !important; }
+.hover\:bg-luxury-gold\/20:hover { background-color: rgba(181,138,69,.16) !important; }
+.hover\:bg-luxury-gold\/30:hover { background-color: rgba(181,138,69,.22) !important; }
+.hover\:text-luxury-cream:hover { color: var(--jf-text) !important; }
+.hover\:text-luxury-gold:hover { color: var(--jf-gold) !important; }
+.hover\:text-luxury-gold-light:hover { color: var(--jf-gold-light) !important; }
+.hover\:border-luxury-gold:hover { border-color: var(--jf-gold) !important; }
+.hover\:border-luxury-gold\/50:hover { border-color: rgba(181,138,69,.60) !important; }
+
+.focus\:border-luxury-gold:focus {
+    border-color: var(--jf-gold) !important;
+    box-shadow: 0 0 0 3px rgba(181,138,69,.10) !important;
+}
+.accent-luxury-gold { accent-color: var(--jf-gold) !important; }
+
+input:not([type="range"]):not([type="color"]):not([type="checkbox"]),
+textarea,
+select {
+    background-color: #fff !important;
+    color: var(--jf-text) !important;
+    border-color: var(--jf-border) !important;
+}
+input::placeholder,
+textarea::placeholder { color: #a1a7b0 !important; }
+select option { background:#fff; color:var(--jf-text); }
+
+.gold-shimmer {
+    background: linear-gradient(
+        90deg,
+        #9f7535 0%,
+        #d6b778 25%,
+        #ad8240 50%,
+        #e2ca98 75%,
+        #9f7535 100%
+    ) !important;
+    background-size: 200% auto !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+}
+
+::-webkit-scrollbar-track { background: var(--jf-surface-soft) !important; }
+::-webkit-scrollbar-thumb { background: #cfc7bb !important; }
+::-webkit-scrollbar-thumb:hover { background: var(--jf-gold) !important; }
+
+/* ===================== INDEX / HOME ===================== */
+body { overflow-x: hidden; }
+
+/* Barra superior */
+#navbar > div {
+    background: rgba(255,255,255,.88) !important;
+    border-bottom-color: rgba(222,215,203,.76) !important;
+    box-shadow: 0 8px 28px rgba(45,38,28,.05);
+}
+
+/* Menú móvil */
+#mobile-menu {
+    background: rgba(251,250,247,.97) !important;
+    color: var(--jf-text) !important;
+}
+
+/* Gradientes de secciones: claros */
+.from-luxury-900 {
+    --tw-gradient-from: #fbfaf7 var(--tw-gradient-from-position) !important;
+    --tw-gradient-to: rgb(251 250 247 / 0) var(--tw-gradient-to-position) !important;
+}
+.to-luxury-900 {
+    --tw-gradient-to: #f7f5f0 var(--tw-gradient-to-position) !important;
+}
+.from-luxury-800\/50 {
+    --tw-gradient-from: rgba(242,238,231,.72) var(--tw-gradient-from-position) !important;
+    --tw-gradient-to: rgb(242 238 231 / 0) var(--tw-gradient-to-position) !important;
+}
+.via-luxury-800\/90 {
+    --tw-gradient-to: rgb(242 238 231 / 0) var(--tw-gradient-to-position) !important;
+    --tw-gradient-stops: var(--tw-gradient-from), rgba(242,238,231,.90) var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+}
+
+/* Overlay sobre fotos: aquí sí conviene mantener oscuridad para lectura */
+.from-luxury-900\/80 {
+    --tw-gradient-from: rgba(31,41,51,.72) var(--tw-gradient-from-position) !important;
+    --tw-gradient-to: rgb(31 41 51 / 0) var(--tw-gradient-to-position) !important;
+}
+
+/* Gradientes dorados */
+.from-luxury-gold {
+    --tw-gradient-from: var(--jf-gold) var(--tw-gradient-from-position) !important;
+    --tw-gradient-to: rgb(181 138 69 / 0) var(--tw-gradient-to-position) !important;
+}
+.from-luxury-gold\/20 {
+    --tw-gradient-from: rgba(181,138,69,.20) var(--tw-gradient-from-position) !important;
+    --tw-gradient-to: rgb(181 138 69 / 0) var(--tw-gradient-to-position) !important;
+}
+.via-luxury-gold\/30 {
+    --tw-gradient-stops: var(--tw-gradient-from), rgba(181,138,69,.30) var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+}
+
+/* Hero */
+section:first-of-type {
+    background:
+        radial-gradient(circle at 25% 24%, rgba(215,188,132,.15), transparent 28%),
+        radial-gradient(circle at 76% 70%, rgba(181,138,69,.09), transparent 30%);
+}
+
+/* Cards */
+.luxury-card {
+    background: rgba(255,255,255,.90) !important;
+    border-color: rgba(222,215,203,.78) !important;
+    box-shadow: var(--jf-shadow-soft);
+}
+.luxury-card::before {
+    background: linear-gradient(90deg,transparent,rgba(181,138,69,.08),transparent) !important;
+}
+.luxury-card:hover {
+    box-shadow: 0 20px 42px rgba(45,38,28,.11) !important;
+}
+
+.product-card > div:first-child {
+    background: #eee9e1 !important;
+    box-shadow: 0 10px 30px rgba(45,38,28,.07);
+}
+
+/* Botones */
+.btn-luxury:hover {
+    box-shadow: 0 10px 28px rgba(181,138,69,.20) !important;
+}
+
+/* Marquee */
+.marquee-container {
+    background: rgba(242,238,231,.42);
+}
+
+/* Vista previa del estudio */
+#personaliza .relative.rounded-3xl {
+    background: #eee9e1 !important;
+    border-color: rgba(222,215,203,.88) !important;
+    box-shadow: var(--jf-shadow);
+}
+#personaliza .bg-luxury-900\/80 {
+    background: rgba(255,255,255,.91) !important;
+}
+
+/* Galería */
+#home-gallery-grid > div {
+    box-shadow: 0 8px 24px rgba(45,38,28,.08);
+}
+
+/* Footer */
+footer {
+    background: #f2eee7 !important;
+    border-top-color: rgba(222,215,203,.88) !important;
+}
+footer .bg-luxury-700 {
+    background: #d8d1c6 !important;
+}
+
+/* Textura menos visible en tema claro */
+.noise-overlay {
+    opacity: .012 !important;
+    mix-blend-mode: multiply;
+}
+</style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-luxury-900 text-luxury-cream">
@@ -177,6 +412,7 @@
                     <!-- Desktop Menu -->
                     <div class="hidden md:flex items-center gap-10">
                         <a href="#productos" class="text-sm font-mono uppercase tracking-widest text-luxury-500 hover:text-luxury-gold transition-colors">Productos</a>
+                        <a href="catalogo.html" class="text-sm font-mono uppercase tracking-widest text-luxury-500 hover:text-luxury-gold transition-colors">Catalogo</a>
                         <a href="#personaliza" class="text-sm font-mono uppercase tracking-widest text-luxury-500 hover:text-luxury-gold transition-colors">Personaliza</a>
                         <a href="#proceso" class="text-sm font-mono uppercase tracking-widest text-luxury-500 hover:text-luxury-gold transition-colors">Proceso</a>
                         <a href="#calidad" class="text-sm font-mono uppercase tracking-widest text-luxury-500 hover:text-luxury-gold transition-colors">Calidad</a>
@@ -202,6 +438,7 @@
     <div id="mobile-menu" class="mobile-menu fixed inset-0 z-40 bg-luxury-900/95 backdrop-blur-xl md:hidden">
         <div class="flex flex-col items-center justify-center h-full gap-8">
             <a href="#productos" class="mobile-link font-display text-3xl text-luxury-cream hover:text-luxury-gold transition-colors">Productos</a>
+            <a href="catalogo.html" class="mobile-link font-display text-3xl text-luxury-cream hover:text-luxury-gold transition-colors">Catalogo</a>
             <a href="#personaliza" class="mobile-link font-display text-3xl text-luxury-cream hover:text-luxury-gold transition-colors">Personaliza</a>
             <a href="#proceso" class="mobile-link font-display text-3xl text-luxury-cream hover:text-luxury-gold transition-colors">Proceso</a>
             <a href="#calidad" class="mobile-link font-display text-3xl text-luxury-cream hover:text-luxury-gold transition-colors">Calidad</a>
@@ -447,6 +684,29 @@
         </div>
     </section>
 
+
+
+    <!-- Ready-to-buy Catalog Preview -->
+    <section id="catalogo-tienda" class="py-24 md:py-32 bg-luxury-800/20">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-5">
+                <div>
+                    <span class="font-mono text-xs uppercase tracking-[0.3em] text-luxury-gold mb-4 block fade-in">Tienda JOVAFAM</span>
+                    <h2 class="font-display text-4xl md:text-6xl text-luxury-cream fade-in">Prendas listas para <span class="italic gold-shimmer">Comprar</span></h2>
+                    <p class="text-luxury-500 mt-4 max-w-2xl fade-in">Elige uno de nuestros diseños terminados, selecciona color, reparte la cantidad entre tus tallas y realiza el pedido directamente.</p>
+                </div>
+                <a href="catalogo.html" class="inline-flex items-center gap-2 text-luxury-gold font-mono text-sm uppercase tracking-widest hover:text-luxury-gold-light transition-colors fade-in">
+                    Ver Catalogo Completo
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </a>
+            </div>
+            <div id="home-shop-grid" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+            <div id="home-shop-empty" class="hidden border border-luxury-700/50 rounded-2xl p-10 text-center text-luxury-500 text-sm">
+                Muy pronto encontrarás prendas JOVAFAM listas para comprar.
+            </div>
+        </div>
+    </section>
+
     <!-- Products Section -->
     <section id="productos" class="py-24 md:py-32">
         <div class="max-w-7xl mx-auto px-6 lg:px-8">
@@ -674,8 +934,9 @@
 
         async function loadHomeData() {
             let home = DEFAULT_HOME;
-            const HARDCODED_URL = '';
-            const HARDCODED_KEY = '';
+            let shopCatalog = { products: [] };
+            const HARDCODED_URL = 'https://xpdmnecyhhzsmujgptwg.supabase.co';
+            const HARDCODED_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhwZG1uZWN5aGh6c211amdwdHdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MDc1MTgsImV4cCI6MjEwMjM4MzUxOH0.lSD7nM6lOIgULpQ0pvJ3HutKClbtXIbTgApvT5Y0E1M';
             try {
                 const saved = localStorage.getItem('jovafam_supabase');
                 const cfg = saved ? JSON.parse(saved) : {};
@@ -683,14 +944,49 @@
                 const key = HARDCODED_KEY || cfg.key;
                 if (url && key && window.supabase) {
                     const client = window.supabase.createClient(url, key);
-                    const { data, error } = await client.from('site_data').select('value').eq('key','home').maybeSingle();
-                    if (!error && data?.value) home = data.value;
+                    const [homeResult, shopResult] = await Promise.all([
+                        client.from('site_data').select('value').eq('key','home').maybeSingle(),
+                        client.from('site_data').select('value').eq('key','shop_catalog').maybeSingle()
+                    ]);
+                    if (!homeResult.error && homeResult.data?.value) home = homeResult.data.value;
+                    if (!shopResult.error && shopResult.data?.value) shopCatalog = shopResult.data.value;
                 }
             } catch(e) { console.warn('No se pudo cargar el inicio remoto:', e); }
             if (home === DEFAULT_HOME) {
                 const saved = localStorage.getItem('jovafam_home');
                 if (saved) { try { home = JSON.parse(saved); } catch(e) {} }
             }
+            if (!Array.isArray(shopCatalog.products) || shopCatalog.products.length === 0) {
+                const savedShop = localStorage.getItem('jovafam_shop_catalog');
+                if (savedShop) { try { shopCatalog = JSON.parse(savedShop); } catch(e) {} }
+            }
+
+            // Render ready-to-buy catalog preview
+            const shopGrid = document.getElementById('home-shop-grid');
+            const shopEmpty = document.getElementById('home-shop-empty');
+            const available = (shopCatalog.products || [])
+                .filter(p => p && p.active !== false)
+                .sort((a,b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0));
+            const preferred = available.filter(p => p.featured).concat(available.filter(p => !p.featured)).slice(0, 4);
+            if (shopGrid) {
+                shopGrid.innerHTML = preferred.map(p => {
+                    const activeColors = (p.colors || []).filter(c => c.active !== false);
+                    const cover = activeColors.find(c => c.image)?.image || '';
+                    const colorDots = activeColors.slice(0,5).map(c => `<span class="w-3 h-3 rounded-full border border-luxury-600" style="background:${c.hex || '#ddd'}" title="${c.name || ''}"></span>`).join('');
+                    return `
+                    <a href="catalogo.html?product=${encodeURIComponent(p.id || '')}" class="product-card group fade-in block">
+                        <div class="relative aspect-[4/5] rounded-2xl overflow-hidden bg-luxury-800 mb-4 border border-luxury-700/50">
+                            ${cover ? `<img src="${cover}" alt="${p.title || 'Producto'}" class="product-image w-full h-full object-contain p-3">` : '<div class="w-full h-full flex items-center justify-center text-luxury-600 text-xs">Sin imagen</div>'}
+                            ${p.featured ? '<span class="absolute top-3 left-3 px-3 py-1 bg-luxury-gold text-luxury-900 text-[10px] font-mono uppercase rounded-full">Destacado</span>' : ''}
+                            <div class="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"><span class="block w-full py-3 rounded-xl bg-luxury-gold text-luxury-900 text-center font-mono text-xs uppercase font-semibold">Elegir opciones</span></div>
+                        </div>
+                        <div class="font-mono text-[10px] uppercase tracking-widest text-luxury-gold mb-1">${p.category || 'General'}</div>
+                        <h3 class="font-display text-xl text-luxury-cream mb-2">${p.title || 'Producto JOVAFAM'}</h3>
+                        <div class="flex items-center justify-between gap-3"><span class="font-mono text-luxury-gold">$${Number(p.basePrice || 0).toFixed(2)}</span><span class="flex gap-1">${colorDots}</span></div>
+                    </a>`;
+                }).join('');
+            }
+            if (shopEmpty) shopEmpty.classList.toggle('hidden', preferred.length > 0);
 
             // Render products
             const prodGrid = document.getElementById('home-products-grid');
@@ -756,6 +1052,10 @@
                     </div>
                 `;
             });
+
+            // Los bloques dinamicos se crean despues del fetch; mostrarlos aunque el observer ya haya sido inicializado.
+            document.querySelectorAll('#home-shop-grid .fade-in, #home-products-grid .fade-in, #home-gallery-grid .fade-in, #home-testimonials-grid .fade-in')
+                .forEach(el => el.classList.add('visible'));
         }
 
         loadHomeData();
